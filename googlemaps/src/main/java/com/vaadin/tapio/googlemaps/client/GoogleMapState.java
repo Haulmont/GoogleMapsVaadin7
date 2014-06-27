@@ -1,17 +1,14 @@
 package com.vaadin.tapio.googlemaps.client;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.vaadin.shared.AbstractComponentState;
+import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+
+import java.util.*;
 
 /**
  * The shared state of the Google Maps. Contains also the default
@@ -28,15 +25,19 @@ public class GoogleMapState extends AbstractComponentState {
     public String language = null;
     public String mapTypeId = "Roadmap";
     public LatLon center = new LatLon(51.477811, -0.001475);
-    public double zoom = 8.0;
-    public double maxZoom = 21.0;
-    public double minZoom = 0.0;
+    public int zoom = 8;
+    public int maxZoom = 21;
+    public int minZoom = 0;
 
     public boolean draggable = true;
     public boolean keyboardShortcutsEnabled = true;
     public boolean scrollWheelEnabled = true;
 
     public boolean visualRefreshEnabled = false;
+
+    public boolean supportDrawing = false;
+
+    public DrawingOptions drawingOptions = null;
 
     public Set<GoogleMapControl> controls = new HashSet<GoogleMapControl>(
             Arrays.asList(GoogleMapControl.MapType, GoogleMapControl.Pan,
@@ -55,13 +56,14 @@ public class GoogleMapState extends AbstractComponentState {
     public LatLon fitToBoundsNE = null;
     public LatLon fitToBoundsSW = null;
 
-    public Set<GoogleMapPolygon> polygons = new HashSet<GoogleMapPolygon>();
     public Set<GoogleMapPolyline> polylines = new HashSet<GoogleMapPolyline>();
     public Set<GoogleMapKmlLayer> kmlLayers = new HashSet<GoogleMapKmlLayer>();
 
     public Map<Long, GoogleMapMarker> markers = new HashMap<Long, GoogleMapMarker>();
 
     public Map<Long, GoogleMapInfoWindow> infoWindows = new HashMap<Long, GoogleMapInfoWindow>();
+
+    public Map<Long, GoogleMapPolygon> polygons = new HashMap<Long, GoogleMapPolygon>();
 
     public boolean isBusiness() {
         return clientId != null;

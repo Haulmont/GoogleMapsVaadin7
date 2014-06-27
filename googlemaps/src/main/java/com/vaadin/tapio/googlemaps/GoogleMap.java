@@ -1,28 +1,21 @@
 package com.vaadin.tapio.googlemaps;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.GoogleMapState;
 import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.InfoWindowClosedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerDraggedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapMovedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The class representing Google Maps.
@@ -30,6 +23,8 @@ import com.vaadin.tapio.googlemaps.client.rpcs.MapMovedRpc;
  * @author Tapio Aali <tapio@vaadin.com>
  */
 public class GoogleMap extends com.vaadin.ui.AbstractComponent {
+
+    private static final long serialVersionUID = -2869498659894907433L;
 
     /**
      * Base map types supported by Google Maps.
@@ -63,7 +58,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     private MapMovedRpc mapMovedRpc = new MapMovedRpc() {
         @Override
-        public void mapMoved(double zoomLevel, LatLon center, LatLon boundsNE,
+        public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
                 LatLon boundsSW) {
             getState().locationFromClient = true;
             getState().zoom = zoomLevel;
@@ -98,6 +93,54 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
+    private PolygonCompleteRpc polygonCompleteRpc = new PolygonCompleteRpc() {
+        private static final long serialVersionUID = 8989540297240790126L;
+
+        @Override
+        public void polygonComplete(GoogleMapPolygon polygon) {
+            if (polygon == null) {
+                return;
+            }
+            getState().polygons.put(polygon.getId(), polygon);
+            for (PolygonCompleteListener listener : polygonCompleteListeners) {
+                listener.polygonComplete(polygon);
+            }
+        }
+    };
+
+    private PolygonEditRpc polygonEditRpc = new PolygonEditRpc() {
+        private static final long serialVersionUID = -8138362526979836605L;
+
+        @Override
+        public void polygonEdited(long polygonId, PolygonEditListener.ActionType actionType, int idx, LatLon latLon) {
+            if (actionType == null || latLon == null) {
+                return;
+            }
+            GoogleMapPolygon polygon = getState().polygons.get(polygonId);
+            if (polygon == null) {
+                return;
+            }
+
+            switch (actionType) {
+                case INSERT:
+                    polygon.getCoordinates().add(idx, latLon);
+                    break;
+                case REMOVE:
+                    polygon.getCoordinates().remove(idx);
+                    break;
+                case SET:
+                    LatLon existing = polygon.getCoordinates().get(idx);
+                    existing.setLat(latLon.getLat());
+                    existing.setLon(latLon.getLon());
+                    latLon = existing;
+                    break;
+            }
+            for (PolygonEditListener listener : polygonEditListeners) {
+                listener.polygonEdited(polygon, actionType, idx, latLon);
+            }
+        }
+    };
+
     private List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
     private List<MapMoveListener> mapMoveListeners = new ArrayList<MapMoveListener>();
@@ -107,6 +150,10 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     private List<MarkerDragListener> markerDragListeners = new ArrayList<MarkerDragListener>();
 
     private List<InfoWindowClosedListener> infoWindowClosedListeners = new ArrayList<InfoWindowClosedListener>();
+
+    private List<PolygonCompleteListener> polygonCompleteListeners = new ArrayList<PolygonCompleteListener>();
+
+    private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
 
     /**
      * Initiates a new GoogleMap object with default settings from the
@@ -128,6 +175,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         registerRpc(mapClickedRpc);
         registerRpc(markerDraggedRpc);
         registerRpc(infoWindowClosedRpc);
+        registerRpc(polygonCompleteRpc);
+        registerRpc(polygonEditRpc);
     }
 
     /**
@@ -159,7 +208,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      *            API. All client IDs begin with a gme- prefix. Not required
      *            when developing in localhost.
      */
-    public GoogleMap(LatLon center, double zoom, String apiKeyOrClientId) {
+    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId) {
         this(apiKeyOrClientId);
         getState().zoom = zoom;
         getState().center = center;
@@ -183,7 +232,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      *            https://developers.google.com/maps/faq#languagesupport for the
      *            list of the supported languages.
      */
-    public GoogleMap(LatLon center, double zoom, String apiKeyOrClientId,
+    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId,
             String language) {
         this(apiKeyOrClientId);
         getState().zoom = zoom;
@@ -227,7 +276,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @param zoom
      *            New amount of the zoom.
      */
-    public void setZoom(double zoom) {
+    public void setZoom(int zoom) {
         getState().locationFromClient = false;
         getState().zoom = zoom;
     }
@@ -237,7 +286,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * 
      * @return Current value of the zoom.
      */
-    public double getZoom() {
+    public int getZoom() {
         return getState().zoom;
     }
 
@@ -337,6 +386,22 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      */
     public void addMarkerDragListener(MarkerDragListener listener) {
         markerDragListeners.add(listener);
+    }
+
+    public void addPolygonCompleteListener(PolygonCompleteListener listener) {
+        polygonCompleteListeners.add(listener);
+    }
+
+    public void removePolygonCompleteListener(PolygonCompleteListener listener) {
+        polygonCompleteListeners.remove(listener);
+    }
+
+    public void addPolygonEditListener(PolygonEditListener listener) {
+        polygonEditListeners.add(listener);
+    }
+
+    public void removePolygonEditListener(PolygonEditListener listener) {
+        polygonEditListeners.remove(listener);
     }
 
     /**
@@ -449,7 +514,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      *            The GoogleMapPolygon to add.
      */
     public void addPolygonOverlay(GoogleMapPolygon polygon) {
-        getState().polygons.add(polygon);
+        getState().polygons.put(polygon.getId(), polygon);
     }
 
     /**
@@ -459,7 +524,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      *            The GoogleMapPolygon to remove.
      */
     public void removePolygonOverlay(GoogleMapPolygon polygon) {
-        getState().polygons.remove(polygon);
+        getState().polygons.remove(polygon.getId());
     }
 
     /**
@@ -642,7 +707,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Sets the limits of the bounds of the visible area to the given values.
      * NOTE: Using the feature does not affect zooming, consider using
-     * {@link #setMinZoom(double)} too.
+     * {@link #setMinZoom(int)} too.
      * 
      * @param limitNE
      *            The coordinates of the northeast limit.
@@ -661,7 +726,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @param maxZoom
      *            The maximum amount for zoom.
      */
-    public void setMaxZoom(double maxZoom) {
+    public void setMaxZoom(int maxZoom) {
         getState().maxZoom = maxZoom;
     }
 
@@ -670,7 +735,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * 
      * @return maximum amount of zoom
      */
-    public double getMaxZoom() {
+    public int getMaxZoom() {
         return getState().maxZoom;
     }
 
@@ -680,7 +745,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @param minZoom
      *            The minimum amount for zoom.
      */
-    public void setMinZoom(double minZoom) {
+    public void setMinZoom(int minZoom) {
         getState().minZoom = minZoom;
     }
 
@@ -689,7 +754,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * 
      * @return minimum amount of zoom
      */
-    public double getMinZoom() {
+    public int getMinZoom() {
         return getState().minZoom;
     }
 
@@ -760,5 +825,13 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     private boolean isClientId(String apiKeyOrClientId) {
         return apiKeyOrClientId != null && apiKeyOrClientId.startsWith("gme-");
+    }
+
+    public void setDrawingOptions(DrawingOptions drawingOptions) {
+        getState().drawingOptions = drawingOptions;
+    }
+
+    public DrawingOptions getDrawingOptions() {
+        return getState().drawingOptions;
     }
 }

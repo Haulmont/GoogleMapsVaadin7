@@ -54,14 +54,25 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<version>${project.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.google.gwt</groupId>
-					<artifactId>gwt-user</artifactId>
-				</exclusion>
-			</exclusions>
+			<!--<version>0.8.1.a</version>-->
+			<!--<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.a.jar</systemPath>-->
+			<!--<scope>system</scope>-->
 		</dependency>
+        <dependency>
+            <groupId>com.github.branflake2267</groupId>
+            <artifactId>gwt-maps-api</artifactId>
+            <version>3.9.0-build-17</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.gwt</groupId>
+                    <artifactId>gwt-dev</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.gwt</groupId>
+                    <artifactId>gwt-user</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 		<dependency>
 			<groupId>com.vaadin</groupId>
 			<artifactId>vaadin-push</artifactId>
@@ -166,6 +177,8 @@
 					<webApp>
 						<contextPath>/</contextPath>
 					</webApp>
+                    <stopPort>8181</stopPort>
+                    <stopKey>foo</stopKey>
 				</configuration>
 			</plugin>
 		</plugins>

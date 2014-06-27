@@ -11,18 +11,11 @@ import com.vaadin.client.ui.layout.ElementResizeEvent;
 import com.vaadin.client.ui.layout.ElementResizeListener;
 import com.vaadin.shared.ui.Connect;
 import com.vaadin.tapio.googlemaps.GoogleMap;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.InfoWindowClosedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerDraggedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapMovedRpc;
+import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
+import com.vaadin.tapio.googlemaps.client.rpcs.*;
 
 /**
  * The connector for the Google Maps JavaScript API v3.
@@ -32,7 +25,7 @@ import com.vaadin.tapio.googlemaps.client.rpcs.MapMovedRpc;
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentConnector implements
         MarkerClickListener, MapMoveListener, MapClickListener,
-        MarkerDragListener, InfoWindowClosedListener {
+        MarkerDragListener, InfoWindowClosedListener, PolygonCompleteListener, PolygonEditListener {
 
     private static final long serialVersionUID = 646346521643L;
 
@@ -50,6 +43,10 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             MarkerDraggedRpc.class, this);
     private InfoWindowClosedRpc infoWindowClosedRpc = RpcProxy.create(
             InfoWindowClosedRpc.class, this);
+    private PolygonCompleteRpc polygonCompleteRpc = RpcProxy.create(
+            PolygonCompleteRpc.class, this);
+    private PolygonEditRpc polygonEditRpc = RpcProxy.create(
+            PolygonEditRpc.class, this);
 
     public GoogleMapConnector() {
     }
@@ -63,6 +60,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setMapClickListener(this);
         getWidget().setMarkerDragListener(this);
         getWidget().setInfoWindowClosedListener(this);
+        getWidget().setPolygonCompleteListener(this);
+        getWidget().setPolygonEditListener(this);
         if (deferred) {
             loadDeferred();
             deferred = false;
@@ -94,21 +93,21 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     @Override
     public void onStateChanged(StateChangeEvent stateChangeEvent) {
         super.onStateChanged(stateChangeEvent);
-
+        GoogleMapWidget widget = getWidget();
         // settings that can be set without API being loaded/map initiated
         if (getState().limitCenterBounds) {
-            getWidget().setCenterBoundLimits(getState().centerNELimit,
+            widget.setCenterBoundLimits(getState().centerNELimit,
                     getState().centerSWLimit);
         } else {
-            getWidget().clearCenterBoundLimits();
+            widget.clearCenterBoundLimits();
         }
 
         if (getState().limitVisibleAreaBounds) {
-            getWidget().setVisibleAreaBoundLimits(
+            widget.setVisibleAreaBoundLimits(
                     getState().visibleAreaNELimit,
                     getState().visibleAreaSWLimit);
         } else {
-            getWidget().clearVisibleAreaBoundLimits();
+            widget.clearVisibleAreaBoundLimits();
         }
 
         // load API/init map
@@ -117,7 +116,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             loadMapApi();
             apiLoaded = true;
             return;
-        } else if (!getWidget().isMapInitiated()) {
+        } else if (!widget.isMapInitiated()) {
             deferred = true;
             initMap();
             return;
@@ -127,63 +126,62 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         boolean initial = stateChangeEvent.isInitialStateChange();
         // do not set zoom/center again if the change originated from client
         if (!getState().locationFromClient || initial) {
-            if (getState().center.getLat() != getWidget().getLatitude()
-                    || getState().center.getLon() != getWidget().getLongitude()) {
-                getWidget().setCenter(getState().center);
+            if (getState().center.getLat() != widget.getLatitude()
+                    || getState().center.getLon() != widget.getLongitude()) {
+                widget.setCenter(getState().center);
             }
-            if (getState().zoom != getWidget().getZoom()) {
-                getWidget().setZoom(getState().zoom);
+            if (getState().zoom != widget.getZoom()) {
+                widget.setZoom(getState().zoom);
             }
         }
 
         if (stateChangeEvent.hasPropertyChanged("markers") || initial) {
-            getWidget().setMarkers(getState().markers.values());
+            widget.setMarkers(getState().markers.values());
         }
 
         if (stateChangeEvent.hasPropertyChanged("polygons") || initial) {
-            getWidget().setPolygonOverlays(getState().polygons);
+            widget.setPolygonOverlays(getState().polygons);
         }
         if (stateChangeEvent.hasPropertyChanged("polylines") || initial) {
-            getWidget().setPolylineOverlays(getState().polylines);
+            widget.setPolylineOverlays(getState().polylines);
         }
         if (stateChangeEvent.hasPropertyChanged("kmlLayers") || initial) {
-            getWidget().setKmlLayers(getState().kmlLayers);
+            widget.setKmlLayers(getState().kmlLayers);
         }
         if (stateChangeEvent.hasPropertyChanged("mapTypeId") || initial) {
-            getWidget().setMapType(getState().mapTypeId);
+            widget.setMapType(getState().mapTypeId);
         }
 
         if (stateChangeEvent.hasPropertyChanged("controls") || initial) {
-            getWidget().setControls(getState().controls);
+            widget.setControls(getState().controls);
         }
 
         if (stateChangeEvent.hasPropertyChanged("draggable") || initial) {
-            getWidget().setDraggable(getState().draggable);
+            widget.setDraggable(getState().draggable);
         }
         if (stateChangeEvent.hasPropertyChanged("keyboardShortcutsEnabled")
                 || initial) {
-            getWidget().setKeyboardShortcutsEnabled(
+            widget.setKeyboardShortcutsEnabled(
                     getState().keyboardShortcutsEnabled);
         }
         if (stateChangeEvent.hasPropertyChanged("scrollWheelEnabled")
                 || initial) {
-            getWidget().setScrollWheelEnabled(getState().scrollWheelEnabled);
+            widget.setScrollWheelEnabled(getState().scrollWheelEnabled);
         }
         if (stateChangeEvent.hasPropertyChanged("minZoom") || initial) {
-            getWidget().setMinZoom(getState().minZoom);
+            widget.setMinZoom(getState().minZoom);
         }
         if (stateChangeEvent.hasPropertyChanged("maxZoom") || initial) {
-            getWidget().setMaxZoom(getState().maxZoom);
+            widget.setMaxZoom(getState().maxZoom);
         }
 
         if (stateChangeEvent.hasPropertyChanged("infoWindows") || initial) {
-            getWidget().setInfoWindows(getState().infoWindows.values());
+            widget.setInfoWindows(getState().infoWindows.values());
         }
 
         if (stateChangeEvent.hasPropertyChanged("visualRefreshEnabled")
                 || initial) {
-            getWidget()
-                    .setVisualRefreshEnabled(getState().visualRefreshEnabled);
+            widget.setVisualRefreshEnabled(getState().visualRefreshEnabled);
         }
 
         if (stateChangeEvent.hasPropertyChanged("fitToBoundsNE")
@@ -191,13 +189,17 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
                 || initial) {
             if (getState().fitToBoundsNE != null
                     && getState().fitToBoundsSW != null) {
-                getWidget().fitToBounds(getState().fitToBoundsNE,
+                widget.fitToBounds(getState().fitToBoundsNE,
                         getState().fitToBoundsSW);
             }
         }
 
+        if (stateChangeEvent.hasPropertyChanged("drawingOptions") || initial) {
+            widget.setDrawingOptions(getState().drawingOptions);
+        }
+
         if (initial) {
-            getWidget().triggerResize();
+            widget.triggerResize();
         }
 
     }
@@ -210,6 +212,12 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         if (getState().language != null) {
             otherParams.append("&language=" + getState().language);
         }
+
+        //always use drawing library because map components share loaded API and
+        //overhead because of reloading api for every map component seems bigger
+        //then the one because of using drawing library
+        otherParams.append("&libraries=drawing");
+
         options.setOtherParms(otherParams.toString());
         Runnable callback = new Runnable() {
             public void run() {
@@ -234,6 +242,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setScrollWheelEnabled(getState().scrollWheelEnabled);
         getWidget().setMinZoom(getState().minZoom);
         getWidget().setMaxZoom(getState().maxZoom);
+        getWidget().setDrawingOptions(getState().drawingOptions);
         if (getState().fitToBoundsNE != null
                 && getState().fitToBoundsSW != null) {
             getWidget().fitToBounds(getState().fitToBoundsNE,
@@ -247,7 +256,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     }
 
     @Override
-    public void mapMoved(double zoomLevel, LatLon center, LatLon boundsNE,
+    public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
             LatLon boundsSW) {
         mapMovedRpc.mapMoved(zoomLevel, center, boundsNE, boundsSW);
     }
@@ -264,7 +273,17 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     }
 
     @Override
+    public void polygonComplete(GoogleMapPolygon polygon) {
+        polygonCompleteRpc.polygonComplete(polygon);
+    }
+
+    @Override
     public void mapClicked(LatLon position) {
         mapClickRpc.mapClicked(position);
+    }
+
+    @Override
+    public void polygonEdited(GoogleMapPolygon polygon, ActionType actionType, int idx, LatLon latLon) {
+        polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
     }
 }

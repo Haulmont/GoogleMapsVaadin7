@@ -1,34 +1,32 @@
 package com.vaadin.tapio.googlemaps.demo;
 
-import java.util.ArrayList;
-
-import javax.servlet.annotation.WebServlet;
-
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.colorpicker.Color;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.drawing.*;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
-import com.vaadin.ui.Button;
+import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
-import com.vaadin.ui.CssLayout;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.Label;
-import com.vaadin.ui.Panel;
-import com.vaadin.ui.UI;
-import com.vaadin.ui.VerticalLayout;
+
+import javax.annotation.Nullable;
+import javax.servlet.annotation.WebServlet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Google Maps UI for testing and demoing.
@@ -38,7 +36,6 @@ import com.vaadin.ui.VerticalLayout;
 @SuppressWarnings("serial")
 public class DemoUI extends UI {
 
-    private GoogleMap googleMap;
     private GoogleMapMarker kakolaMarker = new GoogleMapMarker(
             "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415),
             true, null);
@@ -53,11 +50,20 @@ public class DemoUI extends UI {
 
     @Override
     protected void init(VaadinRequest request) {
+        TabSheet tabSheet = new TabSheet();
+        tabSheet.setSizeFull();
+
+        tabSheet.addTab(getMainTabContent(), "Main");
+        tabSheet.addTab(getDrawingTabContent(), "Drawing");
+
+        setContent(tabSheet);
+    }
+
+    private Component getMainTabContent() {
         VerticalLayout content = new VerticalLayout();
         content.setSizeFull();
-        setContent(content);
-
-        googleMap = new GoogleMap(new LatLon(60.440963, 22.25122), 10.0, apiKey);
+        final GoogleMap googleMap =
+                new GoogleMap(new LatLon(60.440963, 22.25122), 10, apiKey);
         googleMap.setSizeFull();
         kakolaMarker.setAnimationEnabled(false);
         googleMap.addMarker(kakolaMarker);
@@ -65,8 +71,8 @@ public class DemoUI extends UI {
                 60.442423, 22.26044), true, "VAADIN/1377279006_stadium.png");
         googleMap.addMarker("NOT DRAGGABLE: Iso-Heikkilä", new LatLon(
                 60.450403, 22.230399), false, null);
-        googleMap.setMinZoom(4.0);
-        googleMap.setMaxZoom(16.0);
+        googleMap.setMinZoom(4);
+        googleMap.setMaxZoom(16);
 
         kakolaInfoWindow.setWidth("400px");
         kakolaInfoWindow.setHeight("500px");
@@ -105,8 +111,8 @@ public class DemoUI extends UI {
 
         googleMap.addMapMoveListener(new MapMoveListener() {
             @Override
-            public void mapMoved(double zoomLevel, LatLon center,
-                    LatLon boundsNE, LatLon boundsSW) {
+            public void mapMoved(int zoomLevel, LatLon center,
+                                 LatLon boundsNE, LatLon boundsSW) {
                 Label consoleEntry = new Label("Map moved to ("
                         + center.getLat() + ", " + center.getLon() + "), zoom "
                         + zoomLevel + ", boundsNE: (" + boundsNE.getLat()
@@ -128,7 +134,7 @@ public class DemoUI extends UI {
         googleMap.addMarkerDragListener(new MarkerDragListener() {
             @Override
             public void markerDragged(GoogleMapMarker draggedMarker,
-                    LatLon oldPosition) {
+                                      LatLon oldPosition) {
                 Label consoleEntry = new Label("Marker \""
                         + draggedMarker.getCaption() + "\" dragged from ("
                         + oldPosition.getLat() + ", " + oldPosition.getLon()
@@ -154,7 +160,7 @@ public class DemoUI extends UI {
                     @Override
                     public void buttonClick(ClickEvent event) {
                         googleMap.setCenter(new LatLon(60.447737, 21.991668));
-                        googleMap.setZoom(12.0);
+                        googleMap.setZoom(12);
                     }
                 });
         buttonLayoutRow1.addComponent(moveCenterButton);
@@ -235,17 +241,17 @@ public class DemoUI extends UI {
         buttonLayoutRow2.addComponent(addPolyLineButton);
         Button addPolyLineButton2 = new Button(
                 "Draw line from Turku to Raisio2", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(ClickEvent event) {
-                        ArrayList<LatLon> points2 = new ArrayList<LatLon>();
-                        points2.add(new LatLon(60.448118, 22.253738));
-                        points2.add(new LatLon(60.486025, 22.169195));
-                        GoogleMapPolyline overlay2 = new GoogleMapPolyline(
-                                points2, "#d31717", 0.8, 10);
-                        googleMap.addPolyline(overlay2);
-                        event.getButton().setEnabled(false);
-                    }
-                });
+            @Override
+            public void buttonClick(ClickEvent event) {
+                ArrayList<LatLon> points2 = new ArrayList<LatLon>();
+                points2.add(new LatLon(60.448118, 22.253738));
+                points2.add(new LatLon(60.486025, 22.169195));
+                GoogleMapPolyline overlay2 = new GoogleMapPolyline(
+                        points2, "#d31717", 0.8, 10);
+                googleMap.addPolyline(overlay2);
+                event.getButton().setEnabled(false);
+            }
+        });
         buttonLayoutRow2.addComponent(addPolyLineButton2);
         Button changeToTerrainButton = new Button("Change to terrain map",
                 new Button.ClickListener() {
@@ -269,11 +275,11 @@ public class DemoUI extends UI {
 
         Button addInfoWindowButton = new Button(
                 "Add InfoWindow to Kakola marker", new Button.ClickListener() {
-                    @Override
-                    public void buttonClick(ClickEvent event) {
-                        googleMap.openInfoWindow(kakolaInfoWindow);
-                    }
-                });
+            @Override
+            public void buttonClick(ClickEvent event) {
+                googleMap.openInfoWindow(kakolaInfoWindow);
+            }
+        });
         buttonLayoutRow2.addComponent(addInfoWindowButton);
 
         Button moveMarkerButton = new Button("Move kakola marker",
@@ -300,5 +306,136 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow2.addComponent(addKmlLayerButton);
+        return content;
+    }
+
+    public Component getDrawingTabContent() {
+        VerticalLayout content = new VerticalLayout();
+        content.setSizeFull();
+
+        HorizontalLayout mapAndOptionsLayout = new HorizontalLayout();
+        mapAndOptionsLayout.setSizeFull();
+
+        final GoogleMap googleMap = new GoogleMap(
+                new LatLon(60.440963, 22.25122), 10, apiKey);
+        googleMap.setSizeFull();
+
+        // General Options
+        final ComboBox initialDrawingMode = new ComboBox("initial drawing mode",
+                Arrays.asList(OverlayType.values()));
+        final CheckBox enableDrawingControls = new CheckBox("drawing controls", true);
+        VerticalLayout generalOptions = new VerticalLayout(
+                new Label(new Label("<h2>General drawing options</h2>", ContentMode.HTML)),
+                enableDrawingControls,
+                initialDrawingMode
+        );
+
+        // Control options
+        final OptionGroup controlsPosition = new OptionGroup("Position", Arrays.asList(ControlPosition.values()));
+        controlsPosition.setValue(ControlPosition.TOP_CENTER);
+        final OptionGroup drawingModeControls = new OptionGroup("Drawing mode controls", Arrays.asList(OverlayType.values()));
+        drawingModeControls.setMultiSelect(true);
+        drawingModeControls.setValue(OverlayType.POLYGON);
+        final VerticalLayout controlsOptions = new VerticalLayout();
+        controlsOptions.addComponent(new Label("<h2>Controls options</h2>", ContentMode.HTML));
+        controlsOptions.addComponent(controlsPosition);
+        controlsOptions.addComponent(drawingModeControls);
+
+        // Polygon options
+        final CheckBox pgClickable = new CheckBox("clickable", true);
+        final CheckBox pgEditable = new CheckBox("editable", true);
+        final CheckBox pgGeodesic = new CheckBox("geodesic", false);
+        final CheckBox pgVisible = new CheckBox("visible", true);
+        final TextField pgFillColor = new TextField("fill color", "#345678");
+        final TextField pgFillOpacity = new TextField("fill opacity", "0.5");
+        final TextField pgStrokeColor = new TextField("stroke color", "#123456");
+        final TextField pgStrokeOpacity = new TextField("stroke opacity", "0.8");
+        final TextField pgStrokeWeight = new TextField("stroke weight", "5");
+        final TextField pgZIndex = new TextField("z index", "1");
+        ColorPicker pgfillColorPicker = new ColorPicker("test color picker", Color.MAGENTA);
+        ColorPicker pgstrokeColorPicker = new ColorPicker("test2 color picker", Color.BLACK);
+        VerticalLayout polygonOptionsLayout = new VerticalLayout(
+                new Label("<h2>Polygon drawing options</h2>", ContentMode.HTML),
+                pgClickable, pgEditable, pgGeodesic, pgVisible, pgFillColor,
+                pgFillOpacity, pgStrokeColor, pgStrokeOpacity, pgStrokeWeight,
+                pgZIndex, pgfillColorPicker, pgstrokeColorPicker
+        );
+
+
+        Button apply = new Button("Apply");
+        apply.setWidth("50px");
+        apply.setHeight("20px");
+        apply.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                DrawingOptions options = new DrawingOptions();
+                options.setInitialDrawingMode((OverlayType) initialDrawingMode.getValue());
+                options.setEnableDrawingControl(enableDrawingControls.getValue());
+
+                DrawingControlOptions controlOptions = new DrawingControlOptions(
+                        (ControlPosition)controlsPosition.getValue(),
+                        new ArrayList<OverlayType>((Collection)drawingModeControls.getValue()));
+
+                PolygonOptions polygonOptions = new PolygonOptions();
+                polygonOptions.setClickable(pgClickable.getValue());
+                polygonOptions.setEditable(pgEditable.getValue());
+                polygonOptions.setGeodesic(pgGeodesic.getValue());
+                polygonOptions.setVisible(pgVisible.getValue());
+                polygonOptions.setFillColor(pgFillColor.getValue());
+                polygonOptions.setFillOpacity(Double.valueOf(pgFillOpacity.getValue()));
+                polygonOptions.setStrokeColor(pgStrokeColor.getValue());
+                polygonOptions.setStrokeOpacity(Double.valueOf(pgStrokeOpacity.getValue()));
+                polygonOptions.setStrokeWeight(Integer.valueOf(pgStrokeWeight.getValue()));
+                polygonOptions.setZIndex(Integer.valueOf(pgZIndex.getValue()));
+
+                options.setDrawingControlOptions(controlOptions);
+                options.setPolygonOptions(polygonOptions);
+
+                googleMap.setDrawingOptions(options);
+            }
+        });
+
+        Panel drawingPanel = new Panel();
+        drawingPanel.setWidth("300px");
+        VerticalLayout drawingOptions = new VerticalLayout();
+        drawingOptions.addComponent(generalOptions);
+        drawingOptions.addComponent(controlsOptions);
+        drawingOptions.addComponent(polygonOptionsLayout);
+        drawingOptions.addComponent(apply);
+        drawingOptions.setWidth("300px");
+//        googleMap.setHeight("600px");
+//        googleMap.setWidth("100%");
+        mapAndOptionsLayout.addComponent(googleMap);
+        mapAndOptionsLayout.setExpandRatio(googleMap, 1.0f);
+        drawingPanel.setContent(drawingOptions);
+        mapAndOptionsLayout.addComponent(drawingPanel);
+
+        content.addComponent(mapAndOptionsLayout);
+        googleMap.addPolygonCompleteListener(new PolygonCompleteListener() {
+            @Override
+            public void polygonComplete(GoogleMapPolygon googleMapPolygon) {
+                Notification.show("Polygon complete", Arrays.toString(
+                        googleMapPolygon.getCoordinates().toArray()),
+                        Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+        googleMap.addPolygonEditListener(new PolygonEditListener() {
+            @Override
+            public void polygonEdited(GoogleMapPolygon polygon, ActionType
+                    actionType, int idx, LatLon latLon) {
+                String coords = Joiner.on('\n').join(Lists.transform(
+                        polygon.getCoordinates(), new Function<LatLon, String>() {
+                    @Override
+                    public String apply(@Nullable LatLon latLon) {
+                        return latLon.getLat() + "," + latLon.getLon();
+                    }
+                }));
+
+                Notification.show("Polygon edited", "New coordinates: \n"
+                        + coords, Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+        return content;
+
     }
 }
