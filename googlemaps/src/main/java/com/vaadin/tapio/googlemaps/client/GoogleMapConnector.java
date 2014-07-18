@@ -29,10 +29,10 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
 
 @Connect(GoogleMap.class)
-public class GoogleMapConnector extends AbstractComponentContainerConnector
-        implements MarkerClickListener, MapMoveListener, MapClickListener,
+public class GoogleMapConnector extends AbstractComponentContainerConnector implements
+        MarkerClickListener, MapMoveListener, MapClickListener,
         MarkerDragListener, InfoWindowClosedListener, MapTypeChangeListener,
-        PolygonCompleteListener, PolygonEditListener {
+        PolygonCompleteListener, PolygonEditListener, MapInitListener {
 
     private static final long serialVersionUID = -357262975672050103L;
 
@@ -47,6 +47,8 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector
             MarkerClickedRpc.class, this);
     private MapMovedRpc mapMovedRpc = RpcProxy.create(
             MapMovedRpc.class, this);
+    private MapInitRpc mapInitRpc = RpcProxy.create(
+            MapInitRpc.class, this);
     private MapClickedRpc mapClickRpc = RpcProxy.create(
             MapClickedRpc.class, this);
     private MarkerDraggedRpc markerDraggedRpc = RpcProxy.create(
@@ -101,8 +103,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector
     }
 
     protected void initMap() {
-        getWidget().initMap(getState().center, getState().zoom,
-                getState().mapTypeId);
+        getWidget().initMap(getState().center, getState().zoom, getState().mapTypeId, this);
         getWidget().setMarkerClickListener(this);
         getWidget().setMapMoveListener(this);
         getWidget().setMapClickListener(this);
@@ -149,21 +150,20 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector
         getWidget().setPolygonOverlays(getState().polygons);
         getWidget().setPolylineOverlays(getState().polylines);
         getWidget().setKmlLayers(getState().kmlLayers);
+        getWidget().setInfoWindows(getState().infoWindows.values());
         getWidget().setMapType(getState().mapTypeId);
         getWidget().setControls(getState().controls);
         getWidget().setDraggable(getState().draggable);
         getWidget().setKeyboardShortcutsEnabled(
-            getState().keyboardShortcutsEnabled);
+                getState().keyboardShortcutsEnabled);
         getWidget().setScrollWheelEnabled(getState().scrollWheelEnabled);
         getWidget().setMinZoom(getState().minZoom);
         getWidget().setMaxZoom(getState().maxZoom);
-        getWidget().setInfoWindows(getState().infoWindows.values());
         getWidget().setDrawingOptions(getState().drawingOptions);
-
         if (getState().fitToBoundsNE != null
-            && getState().fitToBoundsSW != null) {
+                && getState().fitToBoundsSW != null) {
             getWidget().fitToBounds(getState().fitToBoundsNE,
-                getState().fitToBoundsSW);
+                    getState().fitToBoundsSW);
         }
         getWidget().updateOptionsAndPanning();
         if (initial) {
@@ -196,6 +196,11 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector
     @Override
     public GoogleMapWidget getWidget() {
         return (GoogleMapWidget) super.getWidget();
+    }
+
+    @Override
+    public void init(LatLon center, int zoom, LatLon boundsNE, LatLon boundsSW) {
+        mapInitRpc.init(center, zoom, boundsNE, boundsSW);
     }
 
     @Override

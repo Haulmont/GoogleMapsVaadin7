@@ -4,6 +4,8 @@ import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.maps.client.MapImpl;
 import com.google.gwt.maps.client.MapOptions;
 import com.google.gwt.maps.client.MapTypeId;
@@ -45,6 +47,13 @@ import com.google.gwt.maps.client.events.removeat.RemoveAtMapEvent;
 import com.google.gwt.maps.client.events.removeat.RemoveAtMapHandler;
 import com.google.gwt.maps.client.events.setat.SetAtMapEvent;
 import com.google.gwt.maps.client.events.setat.SetAtMapHandler;
+import com.google.gwt.maps.client.events.tiles.TilesLoadedMapEvent;
+import com.google.gwt.maps.client.events.tiles.TilesLoadedMapHandler;
+import com.google.gwt.maps.client.layers.KmlLayer;
+import com.google.gwt.maps.client.layers.KmlLayerOptions;
+import com.google.gwt.maps.client.mvc.MVCArray;
+import com.google.gwt.maps.client.overlays.*;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -94,12 +103,13 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     protected boolean mapOptionsChanged = false;
     protected boolean panningNeeded = false;
     protected TrafficLayer trafficLayer = null;
+    private boolean initListenerNotified = false;
 
     public GoogleMapWidget() {
         setStyleName(CLASSNAME);
     }
 
-    public void initMap(LatLon center, int zoom, String mapTypeId) {
+    public void initMap(LatLon center, int zoom, String mapTypeId, final MapInitListener initListener) {
 
         mapOptions = MapOptions.newInstance();
         mapOptions.setMapTypeId(MapTypeId.fromValue(mapTypeId.toLowerCase()));
@@ -110,6 +120,20 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         mapImpl = MapImpl.newInstance(getElement(), mapOptions);
 
         map = MapWidget.newInstance(mapImpl);
+
+        mapImpl.addTilesLoadedHandler(new TilesLoadedMapHandler() {
+            @Override
+            public void onEvent(TilesLoadedMapEvent event) {
+                if (!initListenerNotified) {
+                    //call map init listener once
+                    LatLon center = getCenter(mapImpl);
+                    LatLon boundNE = getBoundNE(mapImpl);
+                    LatLon boundSW = getBoundSW(mapImpl);
+                    initListener.init(center, mapImpl.getZoom(), boundNE, boundSW);
+                    initListenerNotified = true;
+                }
+            }
+        });
 
         // always when center has changed, check that it does not go out from
         // the given bounds
@@ -125,7 +149,13 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         mapImpl.addIdleHandler(new IdleMapHandler() {
             @Override
             public void onEvent(IdleMapEvent event) {
-                updateBounds(forceBoundUpdate);
+                //scheduling due to vaadin 7.2 bug: http://dev.vaadin.com/ticket/14164
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    @Override
+                    public void execute() {
+                        updateBounds(forceBoundUpdate);
+                    }
+                });
             }
         });
 
@@ -150,6 +180,21 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 }
             }
         });
+    }
+
+    private LatLon getCenter(MapImpl mapImpl) {
+        return new LatLon(mapImpl.getCenter().getLatitude(),
+                mapImpl.getCenter().getLongitude());
+    }
+
+    private LatLon getBoundSW(MapImpl mapImpl) {
+        return new LatLon(mapImpl.getBounds().getSouthWest().getLatitude(),
+                mapImpl.getBounds().getSouthWest().getLongitude());
+    }
+
+    private LatLon getBoundNE(MapImpl mapImpl) {
+        return new LatLon(mapImpl.getBounds().getNorthEast().getLatitude(),
+                mapImpl.getBounds().getNorthEast().getLongitude());
     }
 
     private boolean checkVisibleAreaBoundLimits() {
@@ -1032,4 +1077,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             polygonCompleteListener.polygonComplete(vPolygon);
         }
     }
+
+    native public void consoleLog(String message) /*-{
+      console.log(message );
+    }-*/;
 }

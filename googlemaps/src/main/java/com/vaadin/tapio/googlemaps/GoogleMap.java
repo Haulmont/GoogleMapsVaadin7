@@ -62,6 +62,8 @@ public class GoogleMap extends AbstractComponentContainer {
             LatLon boundsSW) {
             getState().zoom = zoomLevel;
             getState().center = center;
+            getState().boundNE = boundsNE;
+            getState().boundSW = boundsSW;
             fitToBounds(null, null);
 
             for (MapMoveListener listener : mapMoveListeners) {
@@ -76,6 +78,20 @@ public class GoogleMap extends AbstractComponentContainer {
         public void mapClicked(LatLon position) {
             for (MapClickListener listener : mapClickListeners) {
                 listener.mapClicked(position);
+            }
+        }
+    };
+
+    private MapInitRpc mapInitRpc = new MapInitRpc() {
+
+        private static final long serialVersionUID = 9112208038019675738L;
+
+        @Override
+        public void init(LatLon center, int zoom, LatLon boundsNE, LatLon boundsSW) {
+            getState().boundNE = boundsNE;
+            getState().boundSW = boundsSW;
+            if (initListener != null) {
+                initListener.init(center, zoom, boundsNE, boundsSW);
             }
         }
     };
@@ -171,6 +187,8 @@ public class GoogleMap extends AbstractComponentContainer {
 
     private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
 
+    private MapInitListener initListener;
+
     /**
      * Initiates a new GoogleMap object with default settings from the
      * {@link GoogleMapState state object}.
@@ -209,6 +227,7 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(mapTypeChangedRpc);
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
+        registerRpc(mapInitRpc);
     }
 
     /*
@@ -237,6 +256,20 @@ public class GoogleMap extends AbstractComponentContainer {
      */
     public LatLon getCenter() {
         return getState().center;
+    }
+
+    /**
+     * @return the current position of north-east bound of the map
+     */
+    public LatLon getBoundNE() {
+        return getState().boundNE;
+    }
+
+    /**
+     * @return the current position of south-west bound of the map
+     */
+    public LatLon getBoundSW() {
+        return getState().boundSW;
     }
 
     /**
