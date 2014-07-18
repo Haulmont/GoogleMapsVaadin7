@@ -25,7 +25,8 @@ import com.vaadin.tapio.googlemaps.client.rpcs.*;
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentConnector implements
         MarkerClickListener, MapMoveListener, MapClickListener,
-        MarkerDragListener, InfoWindowClosedListener, PolygonCompleteListener, PolygonEditListener {
+        MarkerDragListener, InfoWindowClosedListener,
+        PolygonCompleteListener, PolygonEditListener, MapInitListener {
 
     private static final long serialVersionUID = 646346521643L;
 
@@ -37,6 +38,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             MarkerClickedRpc.class, this);
     private MapMovedRpc mapMovedRpc = RpcProxy.create(
             MapMovedRpc.class, this);
+    private MapInitRpc mapInitRpc = RpcProxy.create(
+            MapInitRpc.class, this);
     private MapClickedRpc mapClickRpc = RpcProxy.create(
             MapClickedRpc.class, this);
     private MarkerDraggedRpc markerDraggedRpc = RpcProxy.create(
@@ -53,8 +56,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
     private void initMap() {
         getWidget().setVisualRefreshEnabled(getState().visualRefreshEnabled);
-        getWidget().initMap(getState().center, getState().zoom,
-                getState().mapTypeId);
+        getWidget().initMap(getState().center, getState().zoom, getState().mapTypeId, this);
         getWidget().setMarkerClickListener(this);
         getWidget().setMapMoveListener(this);
         getWidget().setMapClickListener(this);
@@ -62,6 +64,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setInfoWindowClosedListener(this);
         getWidget().setPolygonCompleteListener(this);
         getWidget().setPolygonEditListener(this);
+
         if (deferred) {
             loadDeferred();
             deferred = false;
@@ -259,6 +262,11 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
             LatLon boundsSW) {
         mapMovedRpc.mapMoved(zoomLevel, center, boundsNE, boundsSW);
+    }
+
+    @Override
+    public void init(LatLon center, int zoom, LatLon boundsNE, LatLon boundsSW) {
+        mapInitRpc.init(center, zoom, boundsNE, boundsSW);
     }
 
     @Override

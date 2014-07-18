@@ -63,6 +63,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
             getState().locationFromClient = true;
             getState().zoom = zoomLevel;
             getState().center = center;
+            getState().boundNE = boundsNE;
+            getState().boundSW = boundsSW;
             fitToBounds(null, null);
 
             for (MapMoveListener listener : mapMoveListeners) {
@@ -77,6 +79,20 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         public void mapClicked(LatLon position) {
             for (MapClickListener listener : mapClickListeners) {
                 listener.mapClicked(position);
+            }
+        }
+    };
+
+    private MapInitRpc mapInitRpc = new MapInitRpc() {
+
+        private static final long serialVersionUID = 9112208038019675738L;
+
+        @Override
+        public void init(LatLon center, int zoom, LatLon boundsNE, LatLon boundsSW) {
+            getState().boundNE = boundsNE;
+            getState().boundSW = boundsSW;
+            if (initListener != null) {
+                initListener.init(center, zoom, boundsNE, boundsSW);
             }
         }
     };
@@ -155,6 +171,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
 
+    private MapInitListener initListener;
+
     /**
      * Initiates a new GoogleMap object with default settings from the
      * {@link GoogleMapState state object}.
@@ -177,6 +195,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         registerRpc(infoWindowClosedRpc);
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
+        registerRpc(mapInitRpc);
     }
 
     /**
@@ -212,6 +231,29 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         this(apiKeyOrClientId);
         getState().zoom = zoom;
         getState().center = center;
+    }
+
+    /**
+     * Creates a new GoogleMap object with the given center, zoom and ability
+     * to set init listener. Other settings will be
+     * {@link GoogleMapState defaults of the state object}.
+     *
+     * @param center
+     *              Coordinates of the center.
+     * @param zoom
+     *              Amount of zoom.
+     * @param apiKeyOrClientId The Maps API key from Google or the client ID for the Business
+     *            API. All client IDs begin with a gme- prefix. Not required
+     *            when developing in localhost.
+     * @param initListener listener which will be called once, on map initialization. Map initialization
+     *                     corresponds to "tilesloaded" event in google map api v3.
+     */
+    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId,
+                     MapInitListener initListener) {
+        this(apiKeyOrClientId);
+        getState().zoom = zoom;
+        getState().center = center;
+        this.initListener = initListener;
     }
 
     /**
@@ -268,6 +310,20 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      */
     public LatLon getCenter() {
         return getState().center;
+    }
+
+    /**
+     * @return the current position of north-east bound of the map
+     */
+    public LatLon getBoundNE() {
+        return getState().boundNE;
+    }
+
+    /**
+     * @return the current position of south-west bound of the map
+     */
+    public LatLon getBoundSW() {
+        return getState().boundSW;
     }
 
     /**
