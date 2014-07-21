@@ -54,9 +54,9 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<!--<version>0.8.1.a</version>-->
-			<!--<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.a.jar</systemPath>-->
-			<!--<scope>system</scope>-->
+			<version>0.8.1.h</version>
+			<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.h.jar</systemPath>
+			<scope>system</scope>
 		</dependency>
         <dependency>
             <groupId>com.github.branflake2267</groupId>
@@ -153,8 +153,10 @@
 					<persistentunitcachedir>${basedir}/target/tmp/gwt-unitCache</persistentunitcachedir>
 					<compileReport>true</compileReport>
 					<strict>true</strict>
-					<runTarget>http://localhost:8080/</runTarget>
+                    <style>DETAILED</style>
+                <runTarget>http://localhost:8080/</runTarget>
 				</configuration>
+
 				<executions>
 					<!-- You are free to mark this as permanently ignored in Eclipse -->
 					<execution>

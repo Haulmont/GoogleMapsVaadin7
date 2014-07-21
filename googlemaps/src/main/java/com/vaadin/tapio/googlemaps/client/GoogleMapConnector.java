@@ -1,8 +1,8 @@
 package com.vaadin.tapio.googlemaps.client;
 
 import com.google.gwt.ajaxloader.client.AjaxLoader;
-import com.google.gwt.ajaxloader.client.AjaxLoader.AjaxLoaderOptions;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.maps.client.LoadApi;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
@@ -16,6 +16,8 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+
+import java.util.ArrayList;
 
 /**
  * The connector for the Google Maps JavaScript API v3.
@@ -148,9 +150,15 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         if (stateChangeEvent.hasPropertyChanged("polylines") || initial) {
             widget.setPolylineOverlays(getState().polylines);
         }
+
         if (stateChangeEvent.hasPropertyChanged("kmlLayers") || initial) {
             widget.setKmlLayers(getState().kmlLayers);
         }
+
+        if (stateChangeEvent.hasPropertyChanged("heatMapLayers") || initial) {
+            widget.setHeatMapLayers(getState().heatMapLayers);
+        }
+
         if (stateChangeEvent.hasPropertyChanged("mapTypeId") || initial) {
             widget.setMapType(getState().mapTypeId);
         }
@@ -208,27 +216,24 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     }
 
     private void loadMapApi() {
-        AjaxLoaderOptions options = AjaxLoaderOptions.newInstance();
-
-        StringBuffer otherParams = new StringBuffer("sensor=false");
-
+        StringBuilder otherParams = new StringBuilder();
         if (getState().language != null) {
-            otherParams.append("&language=" + getState().language);
+            otherParams.append("&language=").append(getState().language);
         }
 
-        //always use drawing library because map components share loaded API and
-        //overhead because of reloading api for every map component seems bigger
-        //then the one because of using drawing library
-        otherParams.append("&libraries=drawing");
+        ArrayList<LoadApi.LoadLibrary> loadLibraries = new ArrayList<LoadApi.LoadLibrary>();
+        loadLibraries.add(LoadApi.LoadLibrary.DRAWING);
+        loadLibraries.add(LoadApi.LoadLibrary.VISUALIZATION);
 
-        options.setOtherParms(otherParams.toString());
         Runnable callback = new Runnable() {
             public void run() {
                 initMap();
             }
         };
+
         AjaxLoader.init(getState().apiKey);
-        AjaxLoader.loadApi("maps", "3", callback, options);
+        
+        LoadApi.go(callback, loadLibraries, false, otherParams.toString());
     }
 
     private void loadDeferred() {
@@ -236,6 +241,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setPolygonOverlays(getState().polygons);
         getWidget().setPolylineOverlays(getState().polylines);
         getWidget().setKmlLayers(getState().kmlLayers);
+        getWidget().setHeatMapLayers(getState().heatMapLayers);
         getWidget().setInfoWindows(getState().infoWindows.values());
         getWidget().setMapType(getState().mapTypeId);
         getWidget().setControls(getState().controls);

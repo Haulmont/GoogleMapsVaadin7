@@ -1,6 +1,7 @@
 package com.vaadin.tapio.googlemaps.client;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.maps.client.MapImpl;
 import com.google.gwt.maps.client.MapOptions;
@@ -37,11 +38,14 @@ import com.google.gwt.maps.client.layers.KmlLayer;
 import com.google.gwt.maps.client.layers.KmlLayerOptions;
 import com.google.gwt.maps.client.mvc.MVCArray;
 import com.google.gwt.maps.client.overlays.*;
+import com.google.gwt.maps.client.visualizationlib.HeatMapLayer;
+import com.google.gwt.maps.client.visualizationlib.HeatMapLayerOptions;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
@@ -62,6 +66,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<Polyline, GoogleMapPolyline> polylineMap = new HashMap<Polyline, GoogleMapPolyline>();
     private Map<InfoWindow, GoogleMapInfoWindow> infoWindowMap = new HashMap<InfoWindow, GoogleMapInfoWindow>();
     private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
+    private Map<HeatMapLayer, GoogleMapHeatMapLayer> heatMapLayerMap = new HashMap<HeatMapLayer, GoogleMapHeatMapLayer>();
+
     private MarkerClickListener markerClickListener = null;
     private MarkerDragListener markerDragListener = null;
     private InfoWindowClosedListener infoWindowClosedListener = null;
@@ -505,6 +511,63 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             kmlLayer.setMap(map);
 
             kmlLayerMap.put(kmlLayer, gmLayer);
+        }
+    }
+
+    public void setHeatMapLayers(Collection<GoogleMapHeatMapLayer> layers) {
+        for (HeatMapLayer heatMapLayer : heatMapLayerMap.keySet()) {
+            heatMapLayer.setMap(null);
+        }
+        heatMapLayerMap.clear();
+        
+        for (GoogleMapHeatMapLayer heatMapLayer : layers) {
+            HeatMapLayerOptions options = HeatMapLayerOptions.newInstance();
+
+            if (heatMapLayer.getDissipating() != null) {
+                options.setDissipating(heatMapLayer.getDissipating());
+            }
+            if (heatMapLayer.getMaxIntensity() != null) {
+                options.setMaxIntensity(heatMapLayer.getMaxIntensity());
+            }
+            if (heatMapLayer.getOpacity() != null) {
+                options.setOpacity(heatMapLayer.getOpacity());
+            }
+            if (heatMapLayer.getRadius() != null) {
+                options.setRadius(heatMapLayer.getRadius());
+            }
+
+            if (heatMapLayer.getGradient() != null && !heatMapLayer.getGradient().isEmpty()) {
+                JsArrayString gradient = JsArrayString.createArray().cast();
+                for (String color : heatMapLayer.getGradient()) {
+                    gradient.push(color);
+                }
+                options.setGradient(gradient);
+            }
+            HeatMapLayer layer = HeatMapLayer.newInstance(options);
+
+            if (heatMapLayer.getData() != null && !heatMapLayer.getData().isEmpty()) {
+                MVCArray<LatLng> data = MVCArray.newInstance();
+                for (LatLon latLon : heatMapLayer.getData()) {
+                    data.push(LatLng.newInstance(latLon.getLat(), latLon.getLon()));
+                }
+                layer.setData(data);
+            } else if (heatMapLayer.getWeightedData() != null
+                    && !heatMapLayer.getWeightedData().isEmpty()) {
+                MVCArray<com.google.gwt.maps.client.visualizationlib.WeightedLocation> weightedData
+                        = MVCArray.newInstance();
+                for (WeightedLocation location : heatMapLayer.getWeightedData()) {
+                    LatLng latLng = LatLng.newInstance(location.getLocation().getLat(),
+                            location.getLocation().getLon());
+                    weightedData.push(com.google.gwt.maps.client.visualizationlib
+                            .WeightedLocation.newInstance(latLng, location.getWeight()));
+                }
+                layer.setDataWeighted(weightedData);
+            } else {
+                layer.setData(MVCArray.<LatLng>newInstance());
+            }
+
+            layer.setMap(map);
+            heatMapLayerMap.put(layer, heatMapLayer);
         }
     }
 

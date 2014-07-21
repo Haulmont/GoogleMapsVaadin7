@@ -5,6 +5,7 @@ import com.vaadin.tapio.googlemaps.client.GoogleMapState;
 import com.vaadin.tapio.googlemaps.client.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
@@ -605,7 +606,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a KML layer to the map.
-     * 
+     *
      * @param kmlLayer
      *            The KML layer to add.
      */
@@ -615,13 +616,34 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a KML layer from the map.
-     * 
+     *
      * @param kmlLayer
      *            The KML layer to remove.
      */
     public void removeKmlLayer(GoogleMapKmlLayer kmlLayer) {
         getState().kmlLayers.remove(kmlLayer);
     }
+
+    /**
+     * Adds a HeatMap layer to the map.
+     *
+     * @param heatMapLayer
+     *            The HeatMap layer to add.
+     */
+    public void addHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
+        getState().heatMapLayers.add(heatMapLayer);
+    }
+
+    /**
+     * Removes a HeatMap layer from the map.
+     *
+     * @param heatMapLayer
+     *            The HeatMap layer to remove.
+     */
+    public void removeKmlLayer(GoogleMapHeatMapLayer heatMapLayer) {
+        getState().heatMapLayers.remove(heatMapLayer);
+    }
+
 
     /**
      * Sets the type of the base map.
