@@ -559,7 +559,7 @@ public class GoogleMap extends AbstractComponentContainer {
      * @param heatMapLayer
      *            The HeatMap layer to remove.
      */
-    public void removeKmlLayer(GoogleMapHeatMapLayer heatMapLayer) {
+    public void removeHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.remove(heatMapLayer);
     }
 
