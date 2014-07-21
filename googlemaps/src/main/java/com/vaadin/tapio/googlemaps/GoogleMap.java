@@ -640,7 +640,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @param heatMapLayer
      *            The HeatMap layer to remove.
      */
-    public void removeKmlLayer(GoogleMapHeatMapLayer heatMapLayer) {
+    public void removeHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.remove(heatMapLayer);
     }
 
