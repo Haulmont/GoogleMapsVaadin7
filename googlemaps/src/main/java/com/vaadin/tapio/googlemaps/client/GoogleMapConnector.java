@@ -71,6 +71,9 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         }
         loadingApi = true;
         ArrayList<LoadApi.LoadLibrary> loadLibraries = new ArrayList<LoadApi.LoadLibrary>();
+        loadLibraries.add(LoadApi.LoadLibrary.DRAWING);
+        loadLibraries.add(LoadApi.LoadLibrary.VISUALIZATION);
+
         Runnable onLoad = new Runnable() {
             @Override
             public void run() {
@@ -150,6 +153,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setPolygonOverlays(getState().polygons);
         getWidget().setPolylineOverlays(getState().polylines);
         getWidget().setKmlLayers(getState().kmlLayers);
+        getWidget().setHeatMapLayers(getState().heatMapLayers);
         getWidget().setInfoWindows(getState().infoWindows.values());
         getWidget().setMapType(getState().mapTypeId);
         getWidget().setControls(getState().controls);

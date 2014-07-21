@@ -8,8 +8,10 @@ import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.*;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
@@ -23,6 +25,7 @@ import javax.servlet.annotation.WebServlet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Google Maps UI for testing and demoing.
@@ -30,7 +33,6 @@ import java.util.Collection;
 @SuppressWarnings("serial")
 public class DemoUI extends UI {
 
-    private GoogleMap googleMap;
     private GoogleMapMarker kakolaMarker = new GoogleMapMarker(
             "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415),
             true, null);
@@ -40,7 +42,6 @@ public class DemoUI extends UI {
             new LatLon(60.536403, 22.344648), false);
     private GoogleMapInfoWindow maariaWindow = new GoogleMapInfoWindow(
             "Maaria is a district of Turku", maariaMarker);
-    ;
     private Button componentToMaariaInfoWindowButton;
     private final String apiKey = "";
 
@@ -61,24 +62,10 @@ public class DemoUI extends UI {
     }
 
     private Component getMainTabContent() {
-        CssLayout rootLayout = new CssLayout();
-        rootLayout.setSizeFull();
-//        setContent(rootLayout);
+        VerticalLayout content = new VerticalLayout();
+        content.setSizeFull();
+        final GoogleMap googleMap = new GoogleMap(null, null, null);
 
-        TabSheet tabs = new TabSheet();
-        tabs.setSizeFull();
-        rootLayout.addComponent(tabs);
-
-        VerticalLayout mapContent = new VerticalLayout();
-        mapContent.setSizeFull();
-        tabs.addTab(mapContent, "The map map");
-        tabs.addTab(new Label("An another tab"), "The other tab");
-
-        googleMap = new GoogleMap(null, null, null);
-        // uncomment to enable Chinese API.
-        //googleMap.setApiUrl("maps.google.cn");
-        googleMap.setCenter(new LatLon(60.440963, 22.25122));
-        googleMap.setZoom(10);
         googleMap.setSizeFull();
         kakolaMarker.setAnimationEnabled(false);
         googleMap.addMarker(kakolaMarker);
@@ -93,26 +80,25 @@ public class DemoUI extends UI {
         kakolaInfoWindow.setWidth("400px");
         kakolaInfoWindow.setHeight("500px");
 
-        mapContent.addComponent(googleMap);
-        mapContent.setExpandRatio(googleMap, 1.0f);
+        content.addComponent(googleMap);
+        content.setExpandRatio(googleMap, 1.0f);
 
-        Panel console = new Panel();
+        final Panel console = new Panel();
         console.setHeight("100px");
         final CssLayout consoleLayout = new CssLayout();
         console.setContent(consoleLayout);
-        mapContent.addComponent(console);
+        content.addComponent(console);
 
         HorizontalLayout buttonLayoutRow1 = new HorizontalLayout();
         buttonLayoutRow1.setHeight("26px");
-        mapContent.addComponent(buttonLayoutRow1);
+        content.addComponent(buttonLayoutRow1);
 
         HorizontalLayout buttonLayoutRow2 = new HorizontalLayout();
         buttonLayoutRow2.setHeight("26px");
-        mapContent.addComponent(buttonLayoutRow2);
+        content.addComponent(buttonLayoutRow2);
 
         OpenInfoWindowOnMarkerClickListener infoWindowOpener = new OpenInfoWindowOnMarkerClickListener(
                 googleMap, kakolaMarker, kakolaInfoWindow);
-
         googleMap.addMarkerClickListener(infoWindowOpener);
 
         googleMap.addMarkerClickListener(new MarkerClickListener() {
@@ -134,7 +120,11 @@ public class DemoUI extends UI {
                         + center.getLat() + ", " + center.getLon() + "), zoom "
                         + zoomLevel + ", boundsNE: (" + boundsNE.getLat()
                         + ", " + boundsNE.getLon() + "), boundsSW: ("
-                        + boundsSW.getLat() + ", " + boundsSW.getLon() + ")");
+                        + boundsSW.getLat() + ", " + boundsSW.getLon() + ")"
+                        + " map (center, boundNE, boundSW): ("
+                        + googleMap.getCenter().getLat() + ", " + googleMap.getCenter().getLon() + "), ("
+                        + googleMap.getBoundNE().getLat() + ", " + googleMap.getBoundNE().getLon() + "), ("
+                        + googleMap.getBoundSW().getLat() + ", " + googleMap.getBoundSW().getLon() + "))");
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
@@ -367,7 +357,74 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow2.addComponent(trafficLayerButton);
-        return rootLayout;
+
+        Button addHeatMapLayerButton = new Button("Add HeatMap layer",
+                new Button.ClickListener() {
+
+                    @Override
+                    public void buttonClick(ClickEvent event) {
+                        List<LatLon> data = Arrays.asList(new LatLon(60.493086028202555, 22.081146240234375), new LatLon
+                                        (60.4944387701424, 22.137451171875),
+                                new LatLon(60.50691090821668, 22.163543701171875), new LatLon(60.50661090821668, 22.163543701171875),
+                                new LatLon(60.50721090821668, 22.163543701171875), new LatLon(60.50631090821668, 22.163543701171875),
+                                new LatLon(60.50751090821668, 22.163543701171875), new LatLon(60.50551090821668, 22.163543701171875),
+                                new LatLon(60.50791090821668, 22.163543701171875), new LatLon(60.50501090821668, 22.163543701171875),
+                                new LatLon(60.50811090821668, 22.163543701171875), new LatLon(60.50451090821668, 22.163543701171875),
+                                new LatLon(60.50831090821668, 22.163543701171875), new LatLon(60.50401090821668, 22.163543701171875),
+                                new LatLon(60.534319275500465, 22.163543701171875),
+                                new LatLon(60.535670296892135, 22.199249267578125), new LatLon(60.53296819772097, 22.247314453125),
+                                new LatLon(60.559979041457176, 22.270660400390625), new LatLon(60.553903567535286, 22.181396484375),
+                                new LatLon(60.534319275500465, 22.111358642578125), new LatLon(60.512019280355226, 22.11822509765625),
+                                new LatLon(60.505258674134495, 22.325592041015625), new LatLon(60.521481759711904, 22.34893798828125),
+                                new LatLon(60.53398151134199, 22.359237670898438), new LatLon(60.540060727006335, 22.342071533203125),
+                                new LatLon(60.542424558089834, 22.317352294921875), new LatLon(60.53499479324469, 22.324905395507812),
+                                new LatLon(60.48513799355608, 22.295165312499986), new LatLon(60.534319275500465, 22.3626708984375),
+                                new LatLon(60.530603675918925, 22.322158813476562), new LatLon(60.55322844442426, 22.335891723632812),
+                                new LatLon(60.544450561596406, 22.335891723632812), new LatLon(60.540060727006335, 22.357177734375),
+                                new LatLon(60.53364374365928, 22.337265014648438), new LatLon(60.48649106706476, 22.29653860351561),
+                                new LatLon(60.53026587299222, 22.344818115234375), new LatLon(60.52215754533236, 22.353057861328125),
+                                new LatLon(60.521481759711904, 22.361297607421875), new LatLon(60.5133712323503, 22.347564697265625),
+                                new LatLon(60.51134328320246, 22.369537353515625), new LatLon(60.497820378092264, 22.34344482421875),
+                                new LatLon(60.497144084718585, 22.364044189453125), new LatLon(60.48158544292342, 22.34893798828125));
+                        GoogleMapHeatMapLayer layer = new GoogleMapHeatMapLayer(data);
+
+                        googleMap.addHeatMapLayer(layer);
+                    }
+                });
+        buttonLayoutRow2.addComponent(addHeatMapLayerButton);
+
+        Button addWeightedHeatMapLayerButton = new Button("Add weighted HeatMap layer",
+                new Button.ClickListener() {
+
+                    @Override
+                    public void buttonClick(ClickEvent event) {
+                        List<WeightedLocation> data = Arrays.asList(
+                                new WeightedLocation(new LatLon(60.303086028202555, 21.801146240234375), 10),
+                                new WeightedLocation(new LatLon(60.503086028202555, 22.801146240234375), 50),
+                                new WeightedLocation(new LatLon(60.403086028202555, 22.801146240234375), 500));
+                        GoogleMapHeatMapLayer layer = new GoogleMapHeatMapLayer();
+                        layer.setRadius(10.0);
+                        layer.setWeightedData(data);
+                        googleMap.addHeatMapLayer(layer);
+                    }
+                });
+        buttonLayoutRow2.addComponent(addWeightedHeatMapLayerButton);
+
+        Button currentBounds = new Button("Current bounds",
+                new Button.ClickListener() {
+
+                    @Override
+                    public void buttonClick(ClickEvent event) {
+                        Label consoleEntry = new Label("Current bounds \""
+                                + " (boundNE, boundSW): ("
+                                + googleMap.getBoundNE().getLat() + ", " + googleMap.getBoundNE().getLon() + "), ("
+                                + googleMap.getBoundSW().getLat() + ", " + googleMap.getBoundSW().getLon() + "))");
+                        consoleLayout.addComponent(consoleEntry, 0);
+                    }
+                });
+        buttonLayoutRow2.addComponent(currentBounds);
+
+        return content;
     }
 
     public Component getDrawingTabContent() {
