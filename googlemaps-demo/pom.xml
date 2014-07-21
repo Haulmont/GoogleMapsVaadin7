@@ -54,8 +54,8 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<version>0.8.1.h</version>
-			<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.h.jar</systemPath>
+			<version>0.8.1.i</version>
+			<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.i.jar</systemPath>
 			<scope>system</scope>
 		</dependency>
         <dependency>

@@ -5,7 +5,7 @@
 	<groupId>com.haulmont.thirdparty</groupId>
 	<artifactId>googlemaps</artifactId>
 	<packaging>jar</packaging>
-	<version>0.8.1.h</version>
+	<version>0.8.1.i</version>
 	<name>GoogleMaps Add-on</name>
 	<organization>
 		<name>Vaadin/Tapio Aali</name>
