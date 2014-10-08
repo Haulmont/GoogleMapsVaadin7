@@ -111,6 +111,16 @@ public class DemoUI extends UI {
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
+        googleMap.addMarkerDoubleClickListener(new MarkerDoubleClickListener() {
+            @Override
+            public void markerDoubleClicked(GoogleMapMarker clickedMarker) {
+                Label consoleEntry = new Label("Marker \""
+                        + clickedMarker.getCaption() + "\" at ("
+                        + clickedMarker.getPosition().getLat() + ", "
+                        + clickedMarker.getPosition().getLon() + ") double clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
 
         googleMap.addMapMoveListener(new MapMoveListener() {
             @Override

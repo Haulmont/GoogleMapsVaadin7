@@ -20,6 +20,8 @@ import com.google.gwt.maps.client.events.click.ClickMapEvent;
 import com.google.gwt.maps.client.events.click.ClickMapHandler;
 import com.google.gwt.maps.client.events.closeclick.CloseClickMapEvent;
 import com.google.gwt.maps.client.events.closeclick.CloseClickMapHandler;
+import com.google.gwt.maps.client.events.dblclick.DblClickMapEvent;
+import com.google.gwt.maps.client.events.dblclick.DblClickMapHandler;
 import com.google.gwt.maps.client.events.dragend.DragEndMapEvent;
 import com.google.gwt.maps.client.events.dragend.DragEndMapHandler;
 import com.google.gwt.maps.client.events.idle.IdleMapEvent;
@@ -86,6 +88,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<HeatMapLayer, GoogleMapHeatMapLayer> heatMapLayerMap = new HashMap<HeatMapLayer, GoogleMapHeatMapLayer>();
 
     private MarkerClickListener markerClickListener = null;
+    private MarkerDoubleClickListener markerDoubleClickListener = null;
     private MarkerDragListener markerDragListener = null;
     private InfoWindowClosedListener infoWindowClosedListener = null;
     private PolygonCompleteListener polygonCompleteListener = null;
@@ -407,6 +410,15 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                         }
                     }
                 });
+                marker.addDblClickHandler(new DblClickMapHandler() {
+                    @Override
+                    public void onEvent(DblClickMapEvent event) {
+                        if (markerDoubleClickListener != null) {
+                            markerDoubleClickListener.markerDoubleClicked(markerMap
+                                    .get(marker));
+                        }
+                    }
+                });
                 marker.addDragEndHandler(new DragEndMapHandler() {
                     @Override
                     public void onEvent(DragEndMapEvent event) {
@@ -443,6 +455,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setMarkerClickListener(MarkerClickListener listener) {
         markerClickListener = listener;
+    }
+
+    public void setMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
+        markerDoubleClickListener = listener;
     }
 
     public void setMapMoveListener(MapMoveListener listener) {

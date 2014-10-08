@@ -35,12 +35,27 @@ public class GoogleMap extends AbstractComponentContainer {
     }
 
     private final MarkerClickedRpc markerClickedRpc = new MarkerClickedRpc() {
+        private static final long serialVersionUID = -1895207589346639292L;
+
         @Override
         public void markerClicked(long markerId) {
 
             GoogleMapMarker marker = getState().markers.get(markerId);
             for (MarkerClickListener listener : markerClickListeners) {
                 listener.markerClicked(marker);
+            }
+        }
+    };
+
+    private MarkerDoubleClickedRpc markerDoubleClickedRpc = new MarkerDoubleClickedRpc() {
+        private static final long serialVersionUID = 72001405321104167L;
+
+        @Override
+        public void markerClicked(long markerId) {
+
+            GoogleMapMarker marker = getState().markers.get(markerId);
+            for (MarkerDoubleClickListener listener : markerDoubleClickListeners) {
+                listener.markerDoubleClicked(marker);
             }
         }
     };
@@ -168,6 +183,8 @@ public class GoogleMap extends AbstractComponentContainer {
 
     private final List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
+    private List<MarkerDoubleClickListener> markerDoubleClickListeners = new ArrayList<MarkerDoubleClickListener>();
+
     private final List<MapMoveListener> mapMoveListeners = new ArrayList<>();
 
     private final List<MapClickListener> mapClickListeners = new ArrayList<>();
@@ -221,6 +238,7 @@ public class GoogleMap extends AbstractComponentContainer {
         }
 
         registerRpc(markerClickedRpc);
+        registerRpc(markerDoubleClickedRpc);
         registerRpc(mapMovedRpc);
         registerRpc(mapClickedRpc);
         registerRpc(markerDraggedRpc);
@@ -368,6 +386,26 @@ public class GoogleMap extends AbstractComponentContainer {
      */
     public void removeMarkerClickListener(MarkerClickListener listener) {
         markerClickListeners.remove(listener);
+    }
+
+    /**
+     * Adds a MarkerDoubleClickListener to the map.
+     *
+     * @param listener
+     *            The listener to add.
+     */
+    public void addMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
+        markerDoubleClickListeners.add(listener);
+    }
+
+    /**
+     * Removes a MarkerClickListener from the map.
+     *
+     * @param listener
+     *            The listener to remove.
+     */
+    public void removeMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
+        markerDoubleClickListeners.remove(listener);
     }
 
     /**
