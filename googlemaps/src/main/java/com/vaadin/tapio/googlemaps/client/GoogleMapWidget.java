@@ -113,6 +113,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     protected boolean panningNeeded = false;
     protected TrafficLayer trafficLayer = null;
     private boolean initListenerNotified = false;
+    private transient boolean markerDoubleClicked = false;
 
     public GoogleMapWidget() {
         setStyleName(CLASSNAME);
@@ -300,7 +301,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             || allowedBoundsCenter.contains(center)) {
             return false;
         }
-
         double lat = center.getLatitude();
         double lng = center.getLongitude();
 
@@ -400,23 +400,45 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 marker.addMouseUpHandler(new MouseUpMapHandler() {
                     @Override
                     public void onEvent(MouseUpMapEvent event) {
-                        Long timeWhenPressed = markerDragCounter.remove(marker);
-                        Long currentTime = new Date().getTime();
-                        if (currentTime - timeWhenPressed < 150) {
-                            if (markerClickListener != null) {
-                                markerClickListener
-                                    .markerClicked(markerMap.get(marker));
-                            }
+                        if (markerClickListener != null) {
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                @Override
+                                public void execute() {
+                                    Timer timer = new Timer() {
+                                        @Override
+                                        public void run() {
+                                            if (!markerDoubleClicked) {
+                                                markerClickListener.markerClicked(markerMap.get(marker));
+                                            }
+                                        }
+                                    };
+                                    timer.schedule(500);
+                                }
+                            });
                         }
                     }
                 });
+
                 marker.addDblClickHandler(new DblClickMapHandler() {
                     @Override
                     public void onEvent(DblClickMapEvent event) {
+                        markerDoubleClicked = true;
                         if (markerDoubleClickListener != null) {
                             markerDoubleClickListener.markerDoubleClicked(markerMap
                                     .get(marker));
                         }
+                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                            @Override
+                            public void execute() {
+                                Timer timer = new Timer() {
+                                    @Override
+                                    public void run() {
+                                        markerDoubleClicked = false;
+                                    }
+                                };
+                                timer.schedule(500);
+                            }
+                        });
                     }
                 });
                 marker.addDragEndHandler(new DragEndMapHandler() {
@@ -430,7 +452,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
                         if (markerDragListener != null) {
                             markerDragListener.markerDragged(gMarker,
-                                oldPosition);
+                                    oldPosition);
                         }
                     }
                 });
