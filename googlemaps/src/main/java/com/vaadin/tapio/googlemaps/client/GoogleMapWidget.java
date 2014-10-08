@@ -88,6 +88,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private int zoom = 0;
     private boolean forceBoundUpdate = false;
     private boolean initListenerNotified = false;
+    private transient boolean markerDoubleClicked = false;
 
     public GoogleMapWidget() {
         setStyleName(CLASSNAME);
@@ -310,18 +311,43 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     @Override
                     public void onEvent(ClickMapEvent event) {
                         if (markerClickListener != null) {
-                            markerClickListener.markerClicked(markerMap
-                                    .get(marker));
+                            Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                                @Override
+                                public void execute() {
+                                    Timer timer = new Timer() {
+                                        @Override
+                                        public void run() {
+                                            if (!markerDoubleClicked) {
+                                                markerClickListener.markerClicked(markerMap.get(marker));
+                                            }
+                                        }
+                                    };
+                                    timer.schedule(500);
+                                }
+                            });
                         }
                     }
                 });
                 marker.addDblClickHandler(new DblClickMapHandler() {
                     @Override
                     public void onEvent(DblClickMapEvent event) {
+                        markerDoubleClicked = true;
                         if (markerDoubleClickListener != null) {
                             markerDoubleClickListener.markerDoubleClicked(markerMap
                                     .get(marker));
                         }
+                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                            @Override
+                            public void execute() {
+                                Timer timer = new Timer() {
+                                    @Override
+                                    public void run() {
+                                        markerDoubleClicked = false;
+                                    }
+                                };
+                                timer.schedule(500);
+                            }
+                        });
                     }
                 });
                 marker.addDragEndHandler(new DragEndMapHandler() {
