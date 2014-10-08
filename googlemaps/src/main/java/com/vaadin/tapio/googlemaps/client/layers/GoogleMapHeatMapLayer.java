@@ -97,30 +97,34 @@ public class GoogleMapHeatMapLayer {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int) (id ^ (id >>> 32));
-        return result;
-    }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        GoogleMapHeatMapLayer other = (GoogleMapHeatMapLayer) obj;
-        if (id != other.id) {
-            return false;
-        }
+        GoogleMapHeatMapLayer that = (GoogleMapHeatMapLayer) o;
+
+        if (id != that.id) return false;
+        if (data != null ? !data.equals(that.data) : that.data != null) return false;
+        if (dissipating != null ? !dissipating.equals(that.dissipating) : that.dissipating != null) return false;
+        if (gradient != null ? !gradient.equals(that.gradient) : that.gradient != null) return false;
+        if (maxIntensity != null ? !maxIntensity.equals(that.maxIntensity) : that.maxIntensity != null) return false;
+        if (opacity != null ? !opacity.equals(that.opacity) : that.opacity != null) return false;
+        if (radius != null ? !radius.equals(that.radius) : that.radius != null) return false;
+        if (weightedData != null ? !weightedData.equals(that.weightedData) : that.weightedData != null) return false;
+
         return true;
     }
 
-
+    @Override
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + (data != null ? data.hashCode() : 0);
+        result = 31 * result + (weightedData != null ? weightedData.hashCode() : 0);
+        result = 31 * result + (gradient != null ? gradient.hashCode() : 0);
+        result = 31 * result + (opacity != null ? opacity.hashCode() : 0);
+        result = 31 * result + (radius != null ? radius.hashCode() : 0);
+        result = 31 * result + (maxIntensity != null ? maxIntensity.hashCode() : 0);
+        result = 31 * result + (dissipating != null ? dissipating.hashCode() : 0);
+        return result;
+    }
 }

@@ -26,7 +26,7 @@ import java.util.ArrayList;
  */
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentConnector implements
-        MarkerClickListener, MapMoveListener, MapClickListener,
+        MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
         MarkerDragListener, InfoWindowClosedListener,
         PolygonCompleteListener, PolygonEditListener, MapInitListener {
 
@@ -38,6 +38,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     private boolean deferred = false;
     private MarkerClickedRpc markerClickedRpc = RpcProxy.create(
             MarkerClickedRpc.class, this);
+    private MarkerDoubleClickedRpc markerDoubleClickedRpc = RpcProxy.create(
+            MarkerDoubleClickedRpc.class, this);
     private MapMovedRpc mapMovedRpc = RpcProxy.create(
             MapMovedRpc.class, this);
     private MapInitRpc mapInitRpc = RpcProxy.create(
@@ -60,6 +62,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setVisualRefreshEnabled(getState().visualRefreshEnabled);
         getWidget().initMap(getState().center, getState().zoom, getState().mapTypeId, this);
         getWidget().setMarkerClickListener(this);
+        getWidget().setMarkerDoubleClickListener(this);
         getWidget().setMapMoveListener(this);
         getWidget().setMapClickListener(this);
         getWidget().setMarkerDragListener(this);
@@ -262,6 +265,11 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     @Override
     public void markerClicked(GoogleMapMarker clickedMarker) {
         markerClickedRpc.markerClicked(clickedMarker.getId());
+    }
+
+    @Override
+    public void markerDoubleClicked(GoogleMapMarker clickedMarker) {
+        markerDoubleClickedRpc.markerClicked(clickedMarker.getId());
     }
 
     @Override
