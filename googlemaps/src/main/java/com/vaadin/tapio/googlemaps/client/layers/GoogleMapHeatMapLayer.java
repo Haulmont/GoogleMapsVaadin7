@@ -1,7 +1,7 @@
 package com.vaadin.tapio.googlemaps.client.layers;
 
-import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.WeightedLocation;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 
 import java.util.ArrayList;
 import java.util.List;

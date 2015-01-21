@@ -1,6 +1,7 @@
 package com.vaadin.tapio.googlemaps.client;
 
 import com.vaadin.shared.ui.AbstractComponentContainerState;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
@@ -39,9 +40,9 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public DrawingOptions drawingOptions = null;
 
     public Set<GoogleMapControl> controls = new HashSet<GoogleMapControl>(
-        Arrays.asList(GoogleMapControl.MapType, GoogleMapControl.Pan,
-            GoogleMapControl.Rotate, GoogleMapControl.Scale,
-            GoogleMapControl.StreetView, GoogleMapControl.Zoom));
+            Arrays.asList(GoogleMapControl.MapType, GoogleMapControl.Pan,
+                    GoogleMapControl.Rotate, GoogleMapControl.Scale,
+                    GoogleMapControl.StreetView, GoogleMapControl.Zoom));
 
     public boolean limitCenterBounds = false;
     public LatLon centerSWLimit = new LatLon(0.0, 0.0);

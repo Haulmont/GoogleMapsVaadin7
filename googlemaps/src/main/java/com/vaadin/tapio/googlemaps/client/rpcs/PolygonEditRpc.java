@@ -1,7 +1,7 @@
 package com.vaadin.tapio.googlemaps.client.rpcs;
 
 import com.vaadin.shared.communication.ServerRpc;
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.events.PolygonEditListener;
 
 /**

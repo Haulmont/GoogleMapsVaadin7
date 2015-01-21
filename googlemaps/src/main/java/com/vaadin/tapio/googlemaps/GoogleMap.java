@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.GoogleMapState;
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;

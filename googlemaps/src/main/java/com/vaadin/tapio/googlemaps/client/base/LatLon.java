@@ -1,4 +1,4 @@
-package com.vaadin.tapio.googlemaps.client;
+package com.vaadin.tapio.googlemaps.client.base;
 
 import java.io.Serializable;
 

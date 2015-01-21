@@ -7,8 +7,10 @@ import com.vaadin.shared.ui.ContentMode;
 import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
-import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.WeightedLocation;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.MarkerImage;
+import com.vaadin.tapio.googlemaps.client.base.Point;
+import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.*;
 import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
@@ -34,8 +36,7 @@ import java.util.List;
 public class DemoUI extends UI {
 
     private GoogleMapMarker kakolaMarker = new GoogleMapMarker(
-            "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415),
-            true, null);
+            "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415), true);
     private GoogleMapInfoWindow kakolaInfoWindow = new GoogleMapInfoWindow(
             "Kakola used to be a provincial prison.", kakolaMarker);
     private GoogleMapMarker maariaMarker = new GoogleMapMarker("Maaria",
@@ -74,6 +75,13 @@ public class DemoUI extends UI {
         googleMap.addMarker("NOT DRAGGABLE: Iso-Heikkilä", new LatLon(
                 60.450403, 22.230399), false, null);
         googleMap.addMarker(maariaMarker);
+
+        MarkerImage diagPinIcon = new MarkerImage("VAADIN/1377279006_stadium.png");
+        diagPinIcon.setAnchor(new Point(0, 32));
+        GoogleMapMarker diagIconExample = new GoogleMapMarker("Iso-Heikkilä: Diagonal marker example",
+                new LatLon(60.450403, 22.230399), true, diagPinIcon);
+        googleMap.addMarker(diagIconExample);
+
         googleMap.setMinZoom(4);
         googleMap.setMaxZoom(16);
 
@@ -433,7 +441,6 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow2.addComponent(currentBounds);
-
         return content;
     }
 

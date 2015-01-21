@@ -1,8 +1,10 @@
 package com.vaadin.tapio.googlemaps.client.overlays;
 
-import java.io.Serializable;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.MarkerImage;
 
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * The class representing a marker of the Google Map.
@@ -15,16 +17,12 @@ public class GoogleMapMarker implements Serializable {
     private long id;
 
     private LatLon position = new LatLon(0, 0);
-
     private String caption = "";
-
     private boolean draggable = false;
-
     private String iconUrl = null;
-
     private boolean animationEnabled = true;
-
     private boolean optimized = true;
+    private MarkerImage markerImage = null;
 
     /**
      * Instantiates a new GoogleMapMarker.
@@ -51,14 +49,36 @@ public class GoogleMapMarker implements Serializable {
     /**
      * Instantiates a new GoogleMapMarker
      *
-     * @param caption   The caption to use.
-     * @param position  The position of the marker
-     * @param draggable Can marker be dragged?
+     * @param caption
+     *            The caption to use.
+     * @param position
+     *            The position of the marker
+     * @param draggable
+     *            Can marker be dragged?
+     * @param iconUrl
+     *            Url of marker icon
      */
     public GoogleMapMarker(String caption, LatLon position, boolean draggable,
-        String iconUrl) {
+                           String iconUrl) {
         this(caption, position, draggable);
         this.iconUrl = iconUrl;
+    }
+
+    /**
+     * Instantiates a new GoogleMapMarker
+     *
+     * @param caption
+     *            The caption to use.
+     * @param position
+     *            The position of the marker
+     * @param draggable
+     *            Can marker be dragged?
+     * @param markerImage
+     *            Object describing marker icon
+     */
+    public GoogleMapMarker(String caption, LatLon position, boolean draggable, MarkerImage markerImage) {
+        this(caption, position, draggable);
+        this.markerImage = markerImage;
     }
 
     /**
@@ -171,6 +191,14 @@ public class GoogleMapMarker implements Serializable {
         this.optimized = optimized;
     }
 
+    public MarkerImage getMarkerImage() {
+        return markerImage;
+    }
+
+    public void setMarkerImage(MarkerImage markerImage) {
+        this.markerImage = markerImage;
+    }
+
     public long getId() {
         return id;
     }
@@ -205,25 +233,26 @@ public class GoogleMapMarker implements Serializable {
         return true;
     }
 
-    public boolean hasSameFieldValues(GoogleMapMarker other) {
-        if ((other.getCaption() != null || getCaption() != null)
-            && !other.getCaption().equals(getCaption())) {
+    public boolean hasSameFieldValues(GoogleMapMarker o) {
+        if (!Objects.equals(caption, o.caption)) {
             return false;
         }
-        if ((other.getIconUrl() != null || getIconUrl() != null)
-            && !other.getIconUrl().equals(getIconUrl())) {
+        if (!Objects.equals(iconUrl, o.iconUrl)) {
             return false;
         }
-        if (!other.getPosition().equals(getPosition())) {
+        if (!Objects.equals(markerImage, o.markerImage)) {
             return false;
         }
-        if (other.isAnimationEnabled() != isAnimationEnabled()) {
+        if (!Objects.equals(position, o.position)) {
             return false;
         }
-        if (other.isDraggable() != isDraggable()) {
+        if (!Objects.equals(animationEnabled, o.animationEnabled)) {
             return false;
         }
-        if (other.isOptimized() != isOptimized()) {
+        if (!Objects.equals(draggable, o.draggable)) {
+            return false;
+        }
+        if (!Objects.equals(optimized, o.optimized)) {
             return false;
         }
         return true;
