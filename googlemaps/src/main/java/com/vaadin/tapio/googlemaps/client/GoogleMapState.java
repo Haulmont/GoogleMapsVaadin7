@@ -1,6 +1,7 @@
 package com.vaadin.tapio.googlemaps.client;
 
 import com.vaadin.shared.AbstractComponentState;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;

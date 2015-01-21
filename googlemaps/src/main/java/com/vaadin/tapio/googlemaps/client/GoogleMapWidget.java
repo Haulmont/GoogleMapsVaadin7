@@ -9,6 +9,7 @@ import com.google.gwt.maps.client.MapTypeId;
 import com.google.gwt.maps.client.MapWidget;
 import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
+import com.google.gwt.maps.client.base.Point;
 import com.google.gwt.maps.client.base.Size;
 import com.google.gwt.maps.client.controls.ControlPosition;
 import com.google.gwt.maps.client.drawinglib.DrawingControlOptions;
@@ -45,6 +46,8 @@ import com.google.gwt.maps.client.visualizationlib.HeatMapLayerOptions;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
@@ -433,14 +436,47 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         options.setDraggable(googleMapMarker.isDraggable());
         options.setOptimized(googleMapMarker.isOptimized());
 
-        if (googleMapMarker.isAnimationEnabled()) {
-            options.setAnimation(Animation.DROP);
-        }
-
         if (googleMapMarker.getIconUrl() != null) {
             options.setIcon(googleMapMarker.getIconUrl());
         }
+
+        if (googleMapMarker.getMarkerImage() != null) {
+            options.setIcon(createMarkerImage(googleMapMarker.getMarkerImage()));
+        }
+
+        if (googleMapMarker.isAnimationEnabled()) {
+            options.setAnimation(Animation.DROP);
+        }
         return options;
+    }
+
+    private MarkerImage createMarkerImage(com.vaadin.tapio.googlemaps.client.base.MarkerImage googleMapMarkerImage) {
+        if (googleMapMarkerImage == null) {
+            return null;
+        }
+
+        MarkerImage markerImage = MarkerImage.newInstance(googleMapMarkerImage.getUrl());
+        markerImage.setSize(createSize(googleMapMarkerImage.getSize()));
+        markerImage.setAnchor(createPoint(googleMapMarkerImage.getAnchor()));
+        markerImage.setOrigin(createPoint(googleMapMarkerImage.getOrigin()));
+        markerImage.setScaledSize(createSize(googleMapMarkerImage.getScaledSize()));
+
+        return markerImage;
+    }
+
+    private Point createPoint(com.vaadin.tapio.googlemaps.client.base.Point googleMapPoint) {
+        if (googleMapPoint == null) {
+            return null;
+        }
+        return Point.newInstance(googleMapPoint.getX(), googleMapPoint.getY());
+    }
+
+    private Size createSize(com.vaadin.tapio.googlemaps.client.base.Size googleMapSize) {
+        if (googleMapSize == null) {
+            return null;
+        }
+        return Size.newInstance(googleMapSize.getWidth(), googleMapSize.getHeight(),
+                googleMapSize.getWidthUnit(), googleMapSize.getHeightUnit());
     }
 
     public double getZoom() {

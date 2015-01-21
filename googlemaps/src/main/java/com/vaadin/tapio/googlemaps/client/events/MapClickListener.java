@@ -1,8 +1,8 @@
 package com.vaadin.tapio.googlemaps.client.events;
 
-import java.io.Serializable;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import java.io.Serializable;
 
 /**
  * Interface for listening map click events.

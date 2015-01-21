@@ -1,10 +1,10 @@
 package com.vaadin.tapio.googlemaps.client.overlays;
 
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.vaadin.tapio.googlemaps.client.LatLon;
 
 /**
  * A class representing a poly line (a line consisting of multiple points)
@@ -21,15 +21,10 @@ public class GoogleMapPolyline implements Serializable {
     private long id;
 
     private List<LatLon> coordinates = new ArrayList<LatLon>();
-
     private String strokeColor = "#000000";
-
     private double strokeOpacity = 1.0;
-
     private int strokeWeight = 1;
-
     private int zIndex = 0;
-
     private boolean geodesic = false;
 
     public GoogleMapPolyline() {

@@ -1,6 +1,6 @@
 package com.vaadin.tapio.googlemaps.client.events;
 
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 
 /**
  * @author Igor Korotkov (igor@ikorotkov.com)

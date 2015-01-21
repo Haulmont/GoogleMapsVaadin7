@@ -1,6 +1,6 @@
 package com.vaadin.tapio.googlemaps.client.overlays;
 
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,21 +21,13 @@ public class GoogleMapPolygon implements Serializable {
     private long id;
 
     private List<LatLon> coordinates = new ArrayList<LatLon>();
-
     private String fillColor = "#ffffff";
-
     private double fillOpacity = 1.0;
-
     private String strokeColor = "#000000";
-
     private double strokeOpacity = 1.0;
-
     private int strokeWeight = 1;
-
     private int zIndex = 0;
-
     private boolean geodesic = false;
-
     private boolean editable = false;
 
     /**

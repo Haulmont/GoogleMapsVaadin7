@@ -1,9 +1,9 @@
 package com.vaadin.tapio.googlemaps.client.events;
 
-import java.io.Serializable;
-
-import com.vaadin.tapio.googlemaps.client.LatLon;
+import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
+
+import java.io.Serializable;
 
 /**
  * Interface for listening marker drag events.
