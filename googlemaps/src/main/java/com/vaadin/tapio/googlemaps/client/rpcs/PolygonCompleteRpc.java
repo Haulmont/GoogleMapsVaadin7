@@ -4,8 +4,8 @@ import com.vaadin.shared.communication.ServerRpc;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public interface PolygonCompleteRpc extends ServerRpc {
     void polygonComplete(GoogleMapPolygon polygon);

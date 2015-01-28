@@ -19,6 +19,7 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+import com.vaadin.tapio.googlemaps.client.services.*;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
@@ -108,6 +109,8 @@ public class DemoUI extends UI {
         OpenInfoWindowOnMarkerClickListener infoWindowOpener = new OpenInfoWindowOnMarkerClickListener(
                 googleMap, kakolaMarker, kakolaInfoWindow);
         googleMap.addMarkerClickListener(infoWindowOpener);
+
+        addRoute(googleMap);
 
         googleMap.addMarkerClickListener(new MarkerClickListener() {
             @Override
@@ -442,6 +445,30 @@ public class DemoUI extends UI {
                 });
         buttonLayoutRow2.addComponent(currentBounds);
         return content;
+    }
+
+    private void addRoute(final GoogleMap map) {
+        LatLon origin = new LatLon(60.450657407816784, 22.265210151672363);
+        LatLon destination = new LatLon(60.424868589473974, 22.301602363586426);
+        DirectionsWaypoint wp = new DirectionsWaypoint(new LatLon(60.44153414734692, 22.285165786743164), true);
+
+        DirectionsRequest request = new DirectionsRequest(origin, destination, TravelMode.WALKING);
+        request.setWaypoints(Arrays.asList(wp));
+        request.setAvoidHighways(true);
+        request.setProvideRouteAlternatives(true);
+        map.route(request, new DirectionsResultCallback() {
+            @Override
+            public void onCallback(DirectionsResult directionsResult, DirectionsStatus directionsStatus) {
+                if (directionsStatus == DirectionsStatus.OK && directionsResult.getRoutes() != null
+                        && !directionsResult.getRoutes().isEmpty()) {
+                    DirectionsRoute route = directionsResult.getRoutes().get(0);
+                    GoogleMapPolyline polyline = new GoogleMapPolyline(route.getOverviewPath());
+                    polyline.setStrokeWeight(5);
+                    polyline.setStrokeOpacity(0.5);
+                    map.addPolyline(polyline);
+                }
+            }
+        });
     }
 
     public Component getDrawingTabContent() {

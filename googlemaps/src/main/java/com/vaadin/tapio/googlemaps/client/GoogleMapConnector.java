@@ -28,12 +28,14 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentContainerConnector implements
         MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
         MarkerDragListener, InfoWindowClosedListener, MapTypeChangeListener,
-        PolygonCompleteListener, PolygonEditListener, MapInitListener {
+        PolygonCompleteListener, PolygonEditListener, MapInitListener, DirectionsResultHandler {
 
     private static final long serialVersionUID = -357262975672050103L;
 
@@ -62,6 +64,8 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
             PolygonCompleteRpc.class, this);
     private PolygonEditRpc polygonEditRpc = RpcProxy.create(
             PolygonEditRpc.class, this);
+    private HandleDirectionsResultRpc handleDirectionsResultRpc = RpcProxy.create(
+            HandleDirectionsResultRpc.class, this);
     private final MapTypeChangedRpc mapTypeChangedRpc = RpcProxy
             .create(MapTypeChangedRpc.class, this);
 
@@ -119,6 +123,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setMapTypeChangeListener(this);
         getWidget().setPolygonCompleteListener(this);
         getWidget().setPolygonEditListener(this);
+        getWidget().setDirectionsResultHandler(this);
         getLayoutManager().addElementResizeListener(getWidget().getElement(),
             new ElementResizeListener() {
                 @Override
@@ -168,6 +173,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setMinZoom(getState().minZoom);
         getWidget().setMaxZoom(getState().maxZoom);
         getWidget().setDrawingOptions(getState().drawingOptions);
+        getWidget().processDirectionRequests(getState().directionsRequests.values());
         if (getState().fitToBoundsNE != null
                 && getState().fitToBoundsSW != null) {
             getWidget().fitToBounds(getState().fitToBoundsNE,
@@ -295,5 +301,10 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     @Override
     public void polygonEdited(GoogleMapPolygon polygon, ActionType actionType, int idx, LatLon latLon) {
         polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
+    }
+
+    @Override
+    public void handle(long requestId, DirectionsResult result, DirectionsStatus status) {
+        handleDirectionsResultRpc.handle(result, status, requestId);
     }
 }

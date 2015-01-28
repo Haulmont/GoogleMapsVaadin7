@@ -14,6 +14,10 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResultCallback;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 import com.vaadin.ui.AbstractComponentContainer;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.CssLayout;
@@ -33,6 +37,8 @@ public class GoogleMap extends AbstractComponentContainer {
     public enum MapType {
         Hybrid, Roadmap, Satellite, Terrain
     }
+
+    private Map<Long, DirectionsResultCallback> directionsCallbacks = new HashMap<Long, DirectionsResultCallback>();
 
     private final MarkerClickedRpc markerClickedRpc = new MarkerClickedRpc() {
         private static final long serialVersionUID = -1895207589346639292L;
@@ -75,7 +81,7 @@ public class GoogleMap extends AbstractComponentContainer {
     private final MapMovedRpc mapMovedRpc = new MapMovedRpc() {
         @Override
         public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
-            LatLon boundsSW) {
+                LatLon boundsSW) {
             getState().zoom = zoomLevel;
             getState().center = center;
             getState().boundNE = boundsNE;
@@ -181,6 +187,23 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
+    private HandleDirectionsResultRpc handleDirectionsResultRpc = new HandleDirectionsResultRpc() {
+        private static final long serialVersionUID = 2075879581561166850L;
+
+        @Override
+        public void handle(DirectionsResult result, DirectionsStatus status, long directionsRequestId) {
+            DirectionsResultCallback handler = directionsCallbacks.get(directionsRequestId);
+            if (handler != null) {
+                try {
+                    handler.onCallback(result, status);
+                } finally {
+                    getState().directionsRequests.remove(directionsRequestId);
+                    directionsCallbacks.remove(directionsRequestId);
+                }
+            }
+        }
+    };
+
     private final List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
     private List<MarkerDoubleClickListener> markerDoubleClickListeners = new ArrayList<MarkerDoubleClickListener>();
@@ -247,6 +270,7 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
         registerRpc(mapInitRpc);
+        registerRpc(handleDirectionsResultRpc);
     }
 
     /*
@@ -319,9 +343,9 @@ public class GoogleMap extends AbstractComponentContainer {
      * @return GoogleMapMarker object created with the given settings.
      */
     public GoogleMapMarker addMarker(String caption, LatLon position,
-        boolean draggable, String iconUrl) {
+            boolean draggable, String iconUrl) {
         GoogleMapMarker marker = new GoogleMapMarker(caption, position,
-            draggable, iconUrl);
+                draggable, iconUrl);
         getState().markers.put(marker.getId(), marker);
         return marker;
     }
@@ -895,5 +919,10 @@ public class GoogleMap extends AbstractComponentContainer {
 
     public DrawingOptions getDrawingOptions() {
         return getState().drawingOptions;
+    }
+
+    public void route(DirectionsRequest request, DirectionsResultCallback handler) {
+        getState().directionsRequests.put(request.getId(), request);
+        directionsCallbacks.put(request.getId(), handler);
     }
 }

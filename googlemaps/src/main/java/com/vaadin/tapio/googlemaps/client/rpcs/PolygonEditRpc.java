@@ -5,8 +5,8 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.events.PolygonEditListener;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public interface PolygonEditRpc extends ServerRpc {
     public void polygonEdited(long polygonId, PolygonEditListener.ActionType
