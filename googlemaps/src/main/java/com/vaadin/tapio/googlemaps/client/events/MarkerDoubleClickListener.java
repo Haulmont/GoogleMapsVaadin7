@@ -3,8 +3,8 @@ package com.vaadin.tapio.googlemaps.client.events;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public interface MarkerDoubleClickListener {
     /**

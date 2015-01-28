@@ -4,8 +4,8 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public interface PolygonEditListener {
 

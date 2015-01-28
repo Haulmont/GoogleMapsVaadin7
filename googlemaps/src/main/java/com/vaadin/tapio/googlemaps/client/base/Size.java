@@ -3,8 +3,7 @@ package com.vaadin.tapio.googlemaps.client.base;
 import java.io.Serializable;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
  */
 public class Size implements Serializable {
     private static final long serialVersionUID = 7769425097002447246L;

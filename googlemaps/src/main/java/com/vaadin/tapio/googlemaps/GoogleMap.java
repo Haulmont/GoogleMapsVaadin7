@@ -12,11 +12,12 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResultCallback;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The class representing Google Maps.
@@ -33,6 +34,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     public enum MapType {
         Hybrid, Roadmap, Satellite, Terrain
     }
+
+    private Map<Long, DirectionsResultCallback> directionsCallbacks = new HashMap<Long, DirectionsResultCallback>();
 
     private MarkerClickedRpc markerClickedRpc = new MarkerClickedRpc() {
         private static final long serialVersionUID = -1895207589346639292L;
@@ -173,6 +176,23 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
+    private HandleDirectionsResultRpc handleDirectionsResultRpc = new HandleDirectionsResultRpc() {
+        private static final long serialVersionUID = 2075879581561166850L;
+
+        @Override
+        public void handle(DirectionsResult result, DirectionsStatus status, long directionsRequestId) {
+            DirectionsResultCallback handler = directionsCallbacks.get(directionsRequestId);
+            if (handler != null) {
+                try {
+                    handler.onCallback(result, status);
+                } finally {
+                    getState().directionsRequests.remove(directionsRequestId);
+                    directionsCallbacks.remove(directionsRequestId);
+                }
+            }
+        }
+    };
+
     private List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
     private List<MarkerDoubleClickListener> markerDoubleClickListeners = new ArrayList<MarkerDoubleClickListener>();
@@ -215,6 +235,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
         registerRpc(mapInitRpc);
+        registerRpc(handleDirectionsResultRpc);
     }
 
     /**
@@ -949,5 +970,10 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     public DrawingOptions getDrawingOptions() {
         return getState().drawingOptions;
+    }
+
+    public void route(DirectionsRequest request, DirectionsResultCallback handler) {
+        getState().directionsRequests.put(request.getId(), request);
+        directionsCallbacks.put(request.getId(), handler);
     }
 }

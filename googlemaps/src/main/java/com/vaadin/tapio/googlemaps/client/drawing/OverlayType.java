@@ -1,8 +1,8 @@
 package com.vaadin.tapio.googlemaps.client.drawing;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public enum OverlayType {
     CIRCLE,

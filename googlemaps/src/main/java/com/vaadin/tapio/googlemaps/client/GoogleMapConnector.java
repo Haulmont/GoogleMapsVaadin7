@@ -17,6 +17,8 @@ import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
+import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
 import java.util.ArrayList;
 
@@ -29,7 +31,7 @@ import java.util.ArrayList;
 public class GoogleMapConnector extends AbstractComponentConnector implements
         MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
         MarkerDragListener, InfoWindowClosedListener,
-        PolygonCompleteListener, PolygonEditListener, MapInitListener {
+        PolygonCompleteListener, PolygonEditListener, MapInitListener, DirectionsResultHandler {
 
     private static final long serialVersionUID = 646346521643L;
 
@@ -55,6 +57,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             PolygonCompleteRpc.class, this);
     private PolygonEditRpc polygonEditRpc = RpcProxy.create(
             PolygonEditRpc.class, this);
+    private HandleDirectionsResultRpc handleDirectionsResultRpc = RpcProxy.create(
+            HandleDirectionsResultRpc.class, this);
 
     public GoogleMapConnector() {
     }
@@ -70,7 +74,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setInfoWindowClosedListener(this);
         getWidget().setPolygonCompleteListener(this);
         getWidget().setPolygonEditListener(this);
-
+        getWidget().setDirectionsResultHandler(this);
         if (deferred) {
             loadDeferred();
             deferred = false;
@@ -161,6 +165,10 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
         if (stateChangeEvent.hasPropertyChanged("heatMapLayers") || initial) {
             widget.setHeatMapLayers(getState().heatMapLayers);
+        }
+
+        if (stateChangeEvent.hasPropertyChanged("directionsRequests") || initial) {
+            widget.processDirectionRequests(getState().directionsRequests.values());
         }
 
         if (stateChangeEvent.hasPropertyChanged("mapTypeId") || initial) {
@@ -256,6 +264,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setMinZoom(getState().minZoom);
         getWidget().setMaxZoom(getState().maxZoom);
         getWidget().setDrawingOptions(getState().drawingOptions);
+        getWidget().processDirectionRequests(getState().directionsRequests.values());
         if (getState().fitToBoundsNE != null
                 && getState().fitToBoundsSW != null) {
             getWidget().fitToBounds(getState().fitToBoundsNE,
@@ -308,5 +317,10 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     @Override
     public void polygonEdited(GoogleMapPolygon polygon, ActionType actionType, int idx, LatLon latLon) {
         polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
+    }
+
+    @Override
+    public void handle(long requestId, DirectionsResult result, DirectionsStatus status) {
+        handleDirectionsResultRpc.handle(result, status, requestId);
     }
 }

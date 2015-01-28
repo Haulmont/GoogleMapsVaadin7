@@ -3,8 +3,8 @@ package com.vaadin.tapio.googlemaps.client.drawing;
 import java.io.Serializable;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public class DrawingOptions implements Serializable {
 

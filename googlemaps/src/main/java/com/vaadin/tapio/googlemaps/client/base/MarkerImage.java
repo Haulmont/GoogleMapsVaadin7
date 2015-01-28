@@ -3,8 +3,8 @@ package com.vaadin.tapio.googlemaps.client.base;
 import java.io.Serializable;
 
 /**
- * @author korotkov
- * @version $Id$
+ * @author Igor Korotkov (igor@ikorotkov.com)
+
  */
 public class MarkerImage implements Serializable {
     private static final long serialVersionUID = -7586709196736683656L;
