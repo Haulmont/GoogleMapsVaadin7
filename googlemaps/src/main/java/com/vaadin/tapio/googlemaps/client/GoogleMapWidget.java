@@ -428,7 +428,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                         }
                     }
                 });
-
                 marker.addDblClickHandler(new DblClickMapHandler() {
                     @Override
                     public void onEvent(DblClickMapEvent event) {
