@@ -15,15 +15,12 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.MarkerImage;
 import com.vaadin.tapio.googlemaps.client.base.Point;
 import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
-import com.vaadin.tapio.googlemaps.client.drawing.*;
-import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
-import com.vaadin.tapio.googlemaps.client.services.*;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
@@ -239,6 +236,17 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow1.addComponent(zoomToBoundsButton);
+
+        Button clearMarkersButton = new Button("Clear markers",
+                new Button.ClickListener() {
+
+                    @Override
+                    public void buttonClick(ClickEvent event) {
+                        googleMap.clearMarkers();
+                    }
+                });
+        buttonLayoutRow1.addComponent(clearMarkersButton);
+
         Button addPolyOverlayButton = new Button("Add overlay over Luonnonmaa",
                 new Button.ClickListener() {
                     @Override

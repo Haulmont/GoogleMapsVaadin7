@@ -294,16 +294,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     }
 
     public void setMarkers(Collection<GoogleMapMarker> markers) {
-
-        // clear removed markers
-        for (Marker marker : markerMap.keySet()) {
-            GoogleMapMarker gMapMarker = markerMap.get(marker);
-            if (!markers.contains(gMapMarker)) {
-                marker.setMap((MapWidget) null);
-                gmMarkerMap.remove(gMapMarker);
-                markerMap.remove(marker);
-            }
-        }
+        List<GoogleMapMarker> removedMarkers = getRemovedMarkers(markers);
+        removeMarkers(removedMarkers);
 
         for (GoogleMapMarker googleMapMarker : markers) {
             if (!gmMarkerMap.containsKey(googleMapMarker)) {
@@ -372,6 +364,28 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             } else {
                 updateMarker(googleMapMarker);
             }
+        }
+    }
+
+    private List<GoogleMapMarker> getRemovedMarkers(Collection<GoogleMapMarker> newMarkers) {
+        List<GoogleMapMarker> result = new ArrayList<GoogleMapMarker>();
+
+        for (GoogleMapMarker oldMarker : gmMarkerMap.keySet()) {
+            if (!newMarkers.contains(oldMarker)) {
+                result.add(oldMarker);
+            }
+        }
+        return result;
+    }
+
+    private void removeMarkers(List<GoogleMapMarker> markers) {
+        for (GoogleMapMarker gMarker : markers) {
+            Marker marker = gmMarkerMap.get(gMarker);
+            marker.close();
+            marker.setMap((MapWidget) null);
+
+            markerMap.remove(marker);
+            gmMarkerMap.remove(gMarker);
         }
     }
 

@@ -5,14 +5,14 @@
 	<groupId>com.vaadin.tapio</groupId>
 	<artifactId>googlemaps-demo</artifactId>
 	<packaging>war</packaging>
-	<version>0.8.1</version>
+	<version>1.0.2.CUBA.1</version>
 	<name>GoogleMaps Add-on Demo</name>
 	<organization>
 		<name>Vaadin/Tapio Aali</name>
 	</organization>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<vaadin.version>7.3.2</vaadin.version>
+		<vaadin.version>7.4.4</vaadin.version>
 		<vaadin.plugin.version>${vaadin.version}</vaadin.plugin.version>
 	</properties>
 	<licenses>
@@ -54,8 +54,8 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<version>0.8.1.o</version>
-			<systemPath>${basedir}/../googlemaps/target/googlemaps-0.8.1.o.jar</systemPath>
+			<version>1.0.2.CUBA.1</version>
+			<systemPath>${basedir}/../googlemaps/target/googlemaps-1.0.2.CUBA.1.jar</systemPath>
 			<scope>system</scope>
 		</dependency>
         <dependency>
