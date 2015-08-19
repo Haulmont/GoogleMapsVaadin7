@@ -3,14 +3,15 @@ package com.vaadin.tapio.googlemaps.client.layers;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Igor Korotkov (igor@ikorotkov.com)
  */
-public class GoogleMapHeatMapLayer {
-    private static final long serialVersionUID = 7426132367355158931L;
+public class GoogleMapHeatMapLayer implements Serializable {
+    private static final long serialVersionUID = 896513236735515400L;
 
     private static long idCounter = 0;
 
