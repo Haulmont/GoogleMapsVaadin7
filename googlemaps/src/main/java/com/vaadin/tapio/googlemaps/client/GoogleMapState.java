@@ -5,10 +5,7 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 
 import java.util.*;
@@ -68,6 +65,8 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public boolean trafficLayerVisible = false;
 
     public Map<Long, GoogleMapPolygon> polygons = new HashMap<Long, GoogleMapPolygon>();
+
+    public Map<Long, GoogleMapCircle> circles = new HashMap<Long, GoogleMapCircle>();
 
     public String apiUrl = null;
 

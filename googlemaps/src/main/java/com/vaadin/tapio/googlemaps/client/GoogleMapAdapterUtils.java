@@ -6,6 +6,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
 import com.google.gwt.maps.client.controls.ControlPosition;
+import com.google.gwt.maps.client.overlays.CircleOptions;
 import com.google.gwt.maps.client.overlays.PolygonOptions;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.LatLonBounds;
@@ -75,6 +76,25 @@ public class GoogleMapAdapterUtils {
         return options;
     }
 
+    public static CircleOptions toCircleOptions(com.vaadin.tapio.googlemaps.client.drawing.CircleOptions vOptions) {
+        CircleOptions options = CircleOptions.newInstance();
+        if (vOptions.getRadius() != null) {
+            options.setRadius(vOptions.getRadius());
+        }
+        if (vOptions.getCenter() != null) {
+            options.setCenter(toLatLng(vOptions.getCenter()));
+        }
+        options.setClickable(vOptions.isClickable());
+        options.setFillColor(vOptions.getFillColor());
+        options.setFillOpacity(vOptions.getFillOpacity());
+        options.setStrokeColor(vOptions.getStrokeColor());
+        options.setStrokeOpacity(vOptions.getStrokeOpacity());
+        options.setStrokeWeight(vOptions.getStrokeWeight());
+        options.setZindex(vOptions.getZIndex());
+
+        return options;
+    }
+
     public static com.google.gwt.maps.client.drawinglib.OverlayType toOverlayType(
             com.vaadin.tapio.googlemaps.client.drawing.OverlayType vOverlayType) {
         if (vOverlayType == null) {
@@ -83,7 +103,7 @@ public class GoogleMapAdapterUtils {
 
         switch (vOverlayType) {
             case POLYGON: return com.google.gwt.maps.client.drawinglib.OverlayType.POLYGON;
-            case CIRCLE: return com.google.gwt.maps.client.drawinglib.OverlayType.POLYGON;
+            case CIRCLE: return com.google.gwt.maps.client.drawinglib.OverlayType.CIRCLE;
             case MARKER: return com.google.gwt.maps.client.drawinglib.OverlayType.POLYGON;
             case POLYLINE: return com.google.gwt.maps.client.drawinglib.OverlayType.POLYGON;
             case RECTANGLE: return com.google.gwt.maps.client.drawinglib.OverlayType.POLYGON;
@@ -173,7 +193,7 @@ public class GoogleMapAdapterUtils {
         return waypoint;
     }
 
-    private static LatLng toLatLng(LatLon location) {
+    public static LatLng toLatLng(LatLon location) {
         return location != null ? LatLng.newInstance(location.getLat(), location.getLon()) : null;
     }
 

@@ -1,4 +1,4 @@
-package com.vaadin.tapio.googlemaps.client.events;
+package com.vaadin.tapio.googlemaps.client.events.doubleclick;
 
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 

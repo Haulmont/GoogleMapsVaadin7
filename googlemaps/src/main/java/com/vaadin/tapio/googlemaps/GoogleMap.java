@@ -7,13 +7,28 @@ import com.vaadin.tapio.googlemaps.client.GoogleMapState;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.rpcs.centerchange.CircleCenterChangeRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.CircleClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.MapClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.MarkerClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.CircleDoubleClickRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.MarkerDoubleClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.CircleCompleteRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.PolygonCompleteRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.radiuschange.CircleRadiusChangeRpc;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResultCallback;
@@ -66,7 +81,9 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
-    private final MarkerDraggedRpc markerDraggedRpc = new MarkerDraggedRpc() {
+    private MarkerDraggedRpc markerDraggedRpc = new MarkerDraggedRpc() {
+        private static final long serialVersionUID = 7427899436428646969L;
+
         @Override
         public void markerDragged(long markerId, LatLon newPosition) {
             GoogleMapMarker marker = getState().markers.get(markerId);
@@ -78,7 +95,9 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
-    private final MapMovedRpc mapMovedRpc = new MapMovedRpc() {
+    private MapMovedRpc mapMovedRpc = new MapMovedRpc() {
+        private static final long serialVersionUID = -8853831335700786314L;
+
         @Override
         public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
                 LatLon boundsSW) {
@@ -95,7 +114,9 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
-    private final MapClickedRpc mapClickedRpc = new MapClickedRpc() {
+    private MapClickedRpc mapClickedRpc = new MapClickedRpc() {
+        private static final long serialVersionUID = -3074239582333387650L;
+
         @Override
         public void mapClicked(LatLon position) {
             for (MapClickListener listener : mapClickListeners) {
@@ -119,6 +140,8 @@ public class GoogleMap extends AbstractComponentContainer {
     };
 
     private final InfoWindowClosedRpc infoWindowClosedRpc = new InfoWindowClosedRpc() {
+
+        private static final long serialVersionUID = -7969087900137607456L;
 
         @Override
         public void infoWindowClosed(long windowId) {
@@ -154,6 +177,21 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
+    private CircleCompleteRpc circleCompleteRpc = new CircleCompleteRpc() {
+        private static final long serialVersionUID = 8989540297240790126L;
+
+        @Override
+        public void circleComplete(GoogleMapCircle circle) {
+            if (circle == null) {
+                return;
+            }
+            getState().circles.put(circle.getId(), circle);
+            for (CircleCompleteListener listener : circleCompleteListeners) {
+                listener.circleComplete(circle);
+            }
+        }
+    };
+
     private PolygonEditRpc polygonEditRpc = new PolygonEditRpc() {
         private static final long serialVersionUID = -8138362526979836605L;
 
@@ -162,7 +200,7 @@ public class GoogleMap extends AbstractComponentContainer {
             if (actionType == null || latLon == null) {
                 return;
             }
-            GoogleMapPolygon polygon = getState().polygons.get(polygonId);
+            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
             if (polygon == null) {
                 return;
             }
@@ -204,6 +242,62 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
+    private CircleClickedRpc circleClickedRpc = new CircleClickedRpc() {
+
+        private static final long serialVersionUID = -147202438775817921L;
+
+        @Override
+        public void circleClicked(long circleId) {
+            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            for (CircleClickListener listener : circleClickListeners) {
+                listener.circleClicked(circle);
+            }
+        }
+    };
+
+    private CircleDoubleClickRpc circleDoubleClickRpc = new CircleDoubleClickRpc() {
+
+        private static final long serialVersionUID = 3257369147581938217L;
+
+        @Override
+        public void circleDoubleClicked(long circleId) {
+            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            for (CircleDoubleClickListener listener : circleDoubleClickListeners) {
+                listener.circleDoubleClicked(circle);
+            }
+        }
+    };
+
+    private CircleCenterChangeRpc circleCenterChangeRpc = new CircleCenterChangeRpc() {
+
+        private static final long serialVersionUID = 5703076552698659247L;
+
+        @Override
+        public void centerChanged(long circleId, LatLon newCenter) {
+            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            LatLon oldCenter = circle.getCenter();
+            circle.setCenter(newCenter);
+            for (CircleCenterChangeListener listener : circleCenterChangeListeners) {
+                listener.centerChanged(circle, oldCenter);
+            }
+        }
+    };
+
+    private CircleRadiusChangeRpc circleRadiusChangeRpc = new CircleRadiusChangeRpc() {
+
+        private static final long serialVersionUID = 4898056413558408843L;
+
+        @Override
+        public void radiusChanged(long circleId, double newRadius) {
+            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            double oldRadius = circle.getRadius();
+            circle.setRadius(newRadius);
+            for (CircleRadiusChangeListener listener : circleRadiusChangeListeners) {
+                listener.radiusChange(circle, oldRadius);
+            }
+        }
+    };
+
     private final List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
     private List<MarkerDoubleClickListener> markerDoubleClickListeners = new ArrayList<MarkerDoubleClickListener>();
@@ -227,6 +321,16 @@ public class GoogleMap extends AbstractComponentContainer {
     private List<PolygonCompleteListener> polygonCompleteListeners = new ArrayList<PolygonCompleteListener>();
 
     private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
+
+    private List<CircleCompleteListener> circleCompleteListeners = new ArrayList<CircleCompleteListener>();
+
+    private List<CircleCenterChangeListener> circleCenterChangeListeners = new ArrayList<CircleCenterChangeListener>();
+
+    private List<CircleRadiusChangeListener> circleRadiusChangeListeners = new ArrayList<CircleRadiusChangeListener>();
+
+    private List<CircleClickListener> circleClickListeners = new ArrayList<CircleClickListener>();
+
+    private List<CircleDoubleClickListener> circleDoubleClickListeners = new ArrayList<CircleDoubleClickListener>();
 
     private MapInitListener initListener;
 
@@ -271,6 +375,11 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(polygonEditRpc);
         registerRpc(mapInitRpc);
         registerRpc(handleDirectionsResultRpc);
+        registerRpc(circleClickedRpc);
+        registerRpc(circleDoubleClickRpc);
+        registerRpc(circleCenterChangeRpc);
+        registerRpc(circleCompleteRpc);
+        registerRpc(circleRadiusChangeRpc);
     }
 
     /*
@@ -455,6 +564,46 @@ public class GoogleMap extends AbstractComponentContainer {
 
     public void removePolygonEditListener(PolygonEditListener listener) {
         polygonEditListeners.remove(listener);
+    }
+
+    public void addCircleCompleteListener(CircleCompleteListener listener) {
+        circleCompleteListeners.add(listener);
+    }
+
+    public void removeCircleListener(CircleCompleteListener listener) {
+        circleCompleteListeners.remove(listener);
+    }
+
+    public void addCircleClickListener(CircleClickListener listener) {
+        circleClickListeners.add(listener);
+    }
+
+    public void removeCircleClickListener(CircleClickListener listener) {
+        circleClickListeners.remove(listener);
+    }
+
+    public void addCircleDoubleClickListener(CircleDoubleClickListener listener) {
+        circleDoubleClickListeners.add(listener);
+    }
+
+    public void removeCircleDoubleClickListener(CircleDoubleClickListener listener) {
+        circleDoubleClickListeners.remove(listener);
+    }
+
+    public void addCircleCenterChangeListener(CircleCenterChangeListener listener) {
+        circleCenterChangeListeners.add(listener);
+    }
+
+    public void removeCircleCenterChangeListener(CircleCenterChangeListener listener) {
+        circleCenterChangeListeners.remove(listener);
+    }
+
+    public void addCircleRadiusChangeListener(CircleRadiusChangeListener listener) {
+        circleRadiusChangeListeners.add(listener);
+    }
+
+    public void removeCircleRadiusChangeListener(CircleRadiusChangeListener listener) {
+        circleRadiusChangeListeners.remove(listener);
     }
 
     /**

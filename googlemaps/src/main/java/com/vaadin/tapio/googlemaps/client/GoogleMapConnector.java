@@ -24,18 +24,38 @@ import com.vaadin.shared.ui.Connect;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
+import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapCircle;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
+import com.vaadin.tapio.googlemaps.client.rpcs.centerchange.CircleCenterChangeRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.CircleClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.MapClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.MarkerClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.CircleDoubleClickRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.MarkerDoubleClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.CircleCompleteRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.PolygonCompleteRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.radiuschange.CircleRadiusChangeRpc;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentContainerConnector implements
         MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
-        MarkerDragListener, InfoWindowClosedListener, MapTypeChangeListener,
-        PolygonCompleteListener, PolygonEditListener, MapInitListener, DirectionsResultHandler {
+        MarkerDragListener, InfoWindowClosedListener, PolygonCompleteListener, PolygonEditListener,
+        MapInitListener, DirectionsResultHandler, CircleClickListener, CircleDoubleClickListener,
+        CircleCompleteListener, CircleRadiusChangeListener, CircleCenterChangeListener, MapTypeChangeListener {
 
     private static final long serialVersionUID = -357262975672050103L;
 
@@ -46,28 +66,22 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     private final List<GoogleMapInitListener> initListeners = new ArrayList<GoogleMapInitListener>();
 
     private boolean deferred = false;
-    private MarkerClickedRpc markerClickedRpc = RpcProxy.create(
-            MarkerClickedRpc.class, this);
-    private MarkerDoubleClickedRpc markerDoubleClickedRpc = RpcProxy.create(
-            MarkerDoubleClickedRpc.class, this);
-    private MapMovedRpc mapMovedRpc = RpcProxy.create(
-            MapMovedRpc.class, this);
-    private MapInitRpc mapInitRpc = RpcProxy.create(
-            MapInitRpc.class, this);
-    private MapClickedRpc mapClickRpc = RpcProxy.create(
-            MapClickedRpc.class, this);
-    private MarkerDraggedRpc markerDraggedRpc = RpcProxy.create(
-            MarkerDraggedRpc.class, this);
-    private InfoWindowClosedRpc infoWindowClosedRpc = RpcProxy.create(
-            InfoWindowClosedRpc.class, this);
-    private PolygonCompleteRpc polygonCompleteRpc = RpcProxy.create(
-            PolygonCompleteRpc.class, this);
-    private PolygonEditRpc polygonEditRpc = RpcProxy.create(
-            PolygonEditRpc.class, this);
-    private HandleDirectionsResultRpc handleDirectionsResultRpc = RpcProxy.create(
-            HandleDirectionsResultRpc.class, this);
-    private final MapTypeChangedRpc mapTypeChangedRpc = RpcProxy
-            .create(MapTypeChangedRpc.class, this);
+    private MarkerClickedRpc markerClickedRpc = RpcProxy.create(MarkerClickedRpc.class, this);
+    private MarkerDoubleClickedRpc markerDoubleClickedRpc = RpcProxy.create(MarkerDoubleClickedRpc.class, this);
+    private MapMovedRpc mapMovedRpc = RpcProxy.create(MapMovedRpc.class, this);
+    private MapInitRpc mapInitRpc = RpcProxy.create(MapInitRpc.class, this);
+    private MapClickedRpc mapClickRpc = RpcProxy.create(MapClickedRpc.class, this);
+    private MarkerDraggedRpc markerDraggedRpc = RpcProxy.create(MarkerDraggedRpc.class, this);
+    private InfoWindowClosedRpc infoWindowClosedRpc = RpcProxy.create(InfoWindowClosedRpc.class, this);
+    private PolygonCompleteRpc polygonCompleteRpc = RpcProxy.create(PolygonCompleteRpc.class, this);
+    private PolygonEditRpc polygonEditRpc = RpcProxy.create(PolygonEditRpc.class, this);
+    private HandleDirectionsResultRpc handleDirectionsResultRpc = RpcProxy.create(HandleDirectionsResultRpc.class, this);
+    private CircleClickedRpc circleClickedRpc = RpcProxy.create(CircleClickedRpc.class, this);
+    private CircleDoubleClickRpc circleDoubleClickRpc = RpcProxy.create(CircleDoubleClickRpc.class, this);
+    private CircleCenterChangeRpc circleCenterChangeRpc = RpcProxy.create(CircleCenterChangeRpc.class, this);
+    private CircleRadiusChangeRpc circleRadiusChangeRpc = RpcProxy.create(CircleRadiusChangeRpc.class, this);
+    private CircleCompleteRpc circleCompleteRpc = RpcProxy.create(CircleCompleteRpc.class, this);
+    private final MapTypeChangedRpc mapTypeChangedRpc = RpcProxy.create(MapTypeChangedRpc.class, this);
 
     public GoogleMapConnector() {
     }
@@ -124,6 +138,11 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setPolygonCompleteListener(this);
         getWidget().setPolygonEditListener(this);
         getWidget().setDirectionsResultHandler(this);
+        getWidget().setCircleClickListener(this);
+        getWidget().setCircleDoubleClickListener(this);
+        getWidget().setCircleCompleteListener(this);
+        getWidget().setCircleCenterChangeListener(this);
+        getWidget().setCircleRadiusChangeListener(this);
         getLayoutManager().addElementResizeListener(getWidget().getElement(),
             new ElementResizeListener() {
                 @Override
@@ -161,6 +180,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setMarkers(getState().markers.values());
         getWidget().setPolygonOverlays(getState().polygons);
         getWidget().setPolylineOverlays(getState().polylines);
+        getWidget().setCircleOverlays(getState().circles);
         getWidget().setKmlLayers(getState().kmlLayers);
         getWidget().setHeatMapLayers(getState().heatMapLayers);
         getWidget().setInfoWindows(getState().infoWindows.values());
@@ -306,5 +326,30 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     @Override
     public void handle(long requestId, DirectionsResult result, DirectionsStatus status) {
         handleDirectionsResultRpc.handle(result, status, requestId);
+    }
+
+    @Override
+    public void radiusChange(GoogleMapCircle circle, double oldRadius) {
+        circleRadiusChangeRpc.radiusChanged(circle.getId(), circle.getRadius());
+    }
+
+    @Override
+    public void circleDoubleClicked(GoogleMapCircle circle) {
+        circleDoubleClickRpc.circleDoubleClicked(circle.getId());
+    }
+
+    @Override
+    public void circleComplete(GoogleMapCircle circle) {
+        circleCompleteRpc.circleComplete(circle);
+    }
+
+    @Override
+    public void circleClicked(GoogleMapCircle clickedCircle) {
+        circleClickedRpc.circleClicked(clickedCircle.getId());
+    }
+
+    @Override
+    public void centerChanged(GoogleMapCircle circle, LatLon oldCenter) {
+        circleCenterChangeRpc.centerChanged(circle.getId(), circle.getCenter());
     }
 }

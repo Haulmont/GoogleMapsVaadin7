@@ -13,12 +13,16 @@ import com.vaadin.tapio.googlemaps.client.base.Point;
 import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.*;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.services.*;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
 import com.vaadin.ui.*;
@@ -135,8 +139,8 @@ public class DemoUI extends UI {
 
         googleMap.addMapMoveListener(new MapMoveListener() {
             @Override
-            public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
-                                 LatLon boundsSW) {
+            public void mapMoved(int zoomLevel, LatLon center,
+                                 LatLon boundsNE, LatLon boundsSW) {
                 Label consoleEntry = new Label("Map moved to ("
                         + center.getLat() + ", " + center.getLon() + "), zoom "
                         + zoomLevel + ", boundsNE: (" + boundsNE.getLat()
@@ -525,6 +529,23 @@ public class DemoUI extends UI {
                 pgZIndex, pgfillColorPicker, pgstrokeColorPicker
         );
 
+        // Circle options
+        final CheckBox clClickable = new CheckBox("clickable", true);
+        final CheckBox clEditable = new CheckBox("editable", true);
+        final TextField clFillColor = new TextField("fill color", "#345678");
+        final TextField clFillOpacity = new TextField("fill opacity", "0.5");
+        final TextField clStrokeColor = new TextField("stroke color", "#123456");
+        final TextField clStrokeOpacity = new TextField("stroke opacity", "0.8");
+        final TextField clStrokeWeight = new TextField("stroke weight", "5");
+        final TextField clZIndex = new TextField("z index", "1");
+        ColorPicker clFillColorPicker = new ColorPicker("test color picker", Color.MAGENTA);
+        ColorPicker clStrokeColorPicker = new ColorPicker("test2 color picker", Color.BLACK);
+        VerticalLayout circleOptionsLayout = new VerticalLayout(
+                new Label("<h2>Circle drawing options</h2>", ContentMode.HTML),
+                clClickable, clEditable, clFillColor, clFillOpacity, clStrokeColor, clStrokeOpacity, clStrokeWeight,
+                clZIndex, clFillColorPicker, clStrokeColorPicker
+        );
+
 
         Button apply = new Button("Apply");
         apply.setWidth("50px");
@@ -537,8 +558,9 @@ public class DemoUI extends UI {
                 options.setEnableDrawingControl(enableDrawingControls.getValue());
 
                 DrawingControlOptions controlOptions = new DrawingControlOptions(
-                        (ControlPosition) controlsPosition.getValue(),
-                        new ArrayList<OverlayType>((Collection) drawingModeControls.getValue()));
+                        (ControlPosition)controlsPosition.getValue(),
+                        new ArrayList<OverlayType>((Collection)drawingModeControls.getValue()));
+                options.setDrawingControlOptions(controlOptions);
 
                 PolygonOptions polygonOptions = new PolygonOptions();
                 polygonOptions.setClickable(pgClickable.getValue());
@@ -551,9 +573,18 @@ public class DemoUI extends UI {
                 polygonOptions.setStrokeOpacity(Double.valueOf(pgStrokeOpacity.getValue()));
                 polygonOptions.setStrokeWeight(Integer.valueOf(pgStrokeWeight.getValue()));
                 polygonOptions.setZIndex(Integer.valueOf(pgZIndex.getValue()));
-
-                options.setDrawingControlOptions(controlOptions);
                 options.setPolygonOptions(polygonOptions);
+
+                CircleOptions circleOptions = new CircleOptions();
+                circleOptions.setClickable(clClickable.getValue());
+                circleOptions.setEditable(clEditable.getValue());
+                circleOptions.setFillColor(clFillColor.getValue());
+                circleOptions.setFillOpacity(Double.valueOf(clFillOpacity.getValue()));
+                circleOptions.setStrokeColor(clStrokeColor.getValue());
+                circleOptions.setStrokeOpacity(Double.valueOf(clStrokeOpacity.getValue()));
+                circleOptions.setStrokeWeight(Integer.valueOf(clStrokeWeight.getValue()));
+                circleOptions.setZIndex(Integer.valueOf(clZIndex.getValue()));
+                options.setCircleOptions(circleOptions);
 
                 googleMap.setDrawingOptions(options);
             }
@@ -561,11 +592,13 @@ public class DemoUI extends UI {
 
         Panel drawingPanel = new Panel();
         drawingPanel.setWidth("300px");
-        VerticalLayout drawingOptions = new VerticalLayout();
-        drawingOptions.addComponent(generalOptions);
-        drawingOptions.addComponent(controlsOptions);
-        drawingOptions.addComponent(polygonOptionsLayout);
-        drawingOptions.addComponent(apply);
+        VerticalLayout drawingOptionsContent = new VerticalLayout();
+        Panel drawingOptions = new Panel(drawingOptionsContent);
+        drawingOptionsContent.addComponent(apply);
+        drawingOptionsContent.addComponent(generalOptions);
+        drawingOptionsContent.addComponent(controlsOptions);
+        drawingOptionsContent.addComponent(polygonOptionsLayout);
+        drawingOptionsContent.addComponent(circleOptionsLayout);
         drawingOptions.setWidth("300px");
 //        googleMap.setHeight("600px");
 //        googleMap.setWidth("100%");
@@ -583,6 +616,14 @@ public class DemoUI extends UI {
                         Notification.Type.TRAY_NOTIFICATION);
             }
         });
+        googleMap.addCircleCompleteListener(new CircleCompleteListener() {
+            @Override
+            public void circleComplete(GoogleMapCircle googleMapCircle) {
+                Notification.show("Circle complete", Arrays.toString(new Object[]{googleMapCircle.getCenter(), googleMapCircle.getRadius()}),
+                        Notification.Type.TRAY_NOTIFICATION);
+                googleMapCircle.setEditable(true);
+            }
+        });
         googleMap.addPolygonEditListener(new PolygonEditListener() {
             @Override
             public void polygonEdited(GoogleMapPolygon polygon, ActionType
@@ -598,6 +639,21 @@ public class DemoUI extends UI {
 
                 Notification.show("Polygon edited", "New coordinates: \n"
                         + coords, Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+        googleMap.addCircleRadiusChangeListener(new CircleRadiusChangeListener() {
+            @Override
+            public void radiusChange(GoogleMapCircle circle, double v) {
+                Notification.show("Circle radius changed", Arrays.toString(new Object[]{circle.getId(), "new radius: " + circle.getRadius(), "old radius: " + v}),
+                        Notification.Type.TRAY_NOTIFICATION);
+            }
+        });
+        googleMap.addCircleCenterChangeListener(new CircleCenterChangeListener() {
+            @Override
+            public void centerChanged(GoogleMapCircle circle, LatLon oldCenter) {
+                Notification.show("Circle center changed", Arrays.toString(new Object[]{circle.getId(), "new center: "
+                                + circle.getCenter().getLat() + "," + circle.getCenter().getLon(), "old center: " + oldCenter.getLat() + "," + oldCenter.getLon()}),
+                        Notification.Type.TRAY_NOTIFICATION);
             }
         });
         return content;
