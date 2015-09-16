@@ -1,4 +1,4 @@
-package com.vaadin.tapio.googlemaps.client.rpcs;
+package com.vaadin.tapio.googlemaps.client.rpcs.click;
 
 import com.vaadin.shared.communication.ServerRpc;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;

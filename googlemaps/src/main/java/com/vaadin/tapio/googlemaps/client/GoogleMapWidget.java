@@ -27,7 +27,10 @@ import com.google.gwt.maps.client.events.idle.IdleMapEvent;
 import com.google.gwt.maps.client.events.idle.IdleMapHandler;
 import com.google.gwt.maps.client.events.insertat.InsertAtMapEvent;
 import com.google.gwt.maps.client.events.insertat.InsertAtMapHandler;
+import com.google.gwt.maps.client.events.overlaycomplete.circle.CircleCompleteMapEvent;
 import com.google.gwt.maps.client.events.overlaycomplete.polygon.PolygonCompleteMapEvent;
+import com.google.gwt.maps.client.events.radius.RadiusChangeMapEvent;
+import com.google.gwt.maps.client.events.radius.RadiusChangeMapHandler;
 import com.google.gwt.maps.client.events.removeat.RemoveAtMapEvent;
 import com.google.gwt.maps.client.events.removeat.RemoveAtMapHandler;
 import com.google.gwt.maps.client.events.setat.SetAtMapEvent;
@@ -50,12 +53,18 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.events.*;
+import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
+import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
-import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 
 import java.util.*;
@@ -69,6 +78,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<Marker, GoogleMapMarker> markerMap = new HashMap<Marker, GoogleMapMarker>();
     private Map<GoogleMapMarker, Marker> gmMarkerMap = new HashMap<GoogleMapMarker, Marker>();
     private Map<Polygon, GoogleMapPolygon> polygonMap = new HashMap<Polygon, GoogleMapPolygon>();
+    private Map<Circle, GoogleMapCircle> circleMap = new HashMap<Circle, GoogleMapCircle>();
     private Map<Polyline, GoogleMapPolyline> polylineMap = new HashMap<Polyline, GoogleMapPolyline>();
     private Map<InfoWindow, GoogleMapInfoWindow> infoWindowMap = new HashMap<InfoWindow, GoogleMapInfoWindow>();
     private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
@@ -79,6 +89,11 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private MarkerDragListener markerDragListener = null;
     private InfoWindowClosedListener infoWindowClosedListener = null;
     private PolygonCompleteListener polygonCompleteListener = null;
+    private CircleCompleteListener circleCompleteListener = null;
+    private CircleClickListener circleClickListener = null;
+    private CircleCenterChangeListener circleCenterChangeListener = null;
+    private CircleDoubleClickListener circleDoubleClickListener = null;
+    private CircleRadiusChangeListener circleRadiusChangeListener = null;
     private PolygonEditListener polygonEditListener = null;
     private DirectionsResultHandler directionsResultHandler = null;
 
@@ -438,6 +453,26 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         directionsResultHandler = handler;
     }
 
+    public void setCircleCompleteListener(CircleCompleteListener circleCompleteListener) {
+        this.circleCompleteListener = circleCompleteListener;
+    }
+
+    public void setCircleClickListener(CircleClickListener circleClickListener) {
+        this.circleClickListener = circleClickListener;
+    }
+
+    public void setCircleCenterChangeListener(CircleCenterChangeListener circleCenterChangeListener) {
+        this.circleCenterChangeListener = circleCenterChangeListener;
+    }
+
+    public void setCircleDoubleClickListener(CircleDoubleClickListener circleDoubleClickListener) {
+        this.circleDoubleClickListener = circleDoubleClickListener;
+    }
+
+    public void setCircleRadiusChangeListener(CircleRadiusChangeListener circleRadiusChangeListener) {
+        this.circleRadiusChangeListener = circleRadiusChangeListener;
+    }
+
     private Marker addMarker(GoogleMapMarker googleMapMarker) {
         MarkerOptions options = createMarkerOptions(googleMapMarker);
 
@@ -562,6 +597,80 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             polygonMap.put(polygon, overlay);
         }
 
+    }
+
+    public void setCircleOverlays(Map<Long, GoogleMapCircle> circleOverlays) {
+        for (Circle circle : circleMap.keySet()) {
+            circle.setMap((MapWidget) null);
+        }
+        circleMap.clear();
+
+        for (GoogleMapCircle overlay : circleOverlays.values()) {
+
+            CircleOptions options = CircleOptions.newInstance();
+
+            options.setCenter(GoogleMapAdapterUtils.toLatLng(overlay.getCenter()));
+            options.setRadius(overlay.getRadius());
+            options.setFillColor(overlay.getFillColor());
+            options.setFillOpacity(overlay.getFillOpacity());
+            options.setStrokeColor(overlay.getStrokeColor());
+            options.setStrokeOpacity(overlay.getStrokeOpacity());
+            options.setStrokeWeight(overlay.getStrokeWeight());
+            options.setZindex(overlay.getzIndex());
+            options.setClickable(overlay.isClickable());
+
+            Circle circle = Circle.newInstance(options);
+
+            circle.setRadius(overlay.getRadius());
+            circle.setMap(map);
+            circle.setEditable(overlay.isEditable());
+
+            attachCircleListeners(circle);
+            circleMap.put(circle, overlay);
+        }
+    }
+
+    private void attachCircleListeners(final Circle circle) {
+        circle.addCenterChangeHandler(new CenterChangeMapHandler() {
+            @Override
+            public void onEvent(CenterChangeMapEvent event) {
+                GoogleMapCircle vCircle = circleMap.get(circle);
+                LatLon oldCenter = vCircle.getCenter();
+                vCircle.setCenter(GoogleMapAdapterUtils.fromLatLng(circle.getCenter()));
+                if (circleCenterChangeListener != null && !Objects.equals(oldCenter, circle.getCenter())) {
+                    circleCenterChangeListener.centerChanged(vCircle, oldCenter);
+                }
+            }
+        });
+        circle.addClickHandler(new ClickMapHandler() {
+            @Override
+            public void onEvent(ClickMapEvent event) {
+                if (circleClickListener != null) {
+                    GoogleMapCircle vCircle = circleMap.get(circle);
+                    circleClickListener.circleClicked(vCircle);
+                }
+            }
+        });
+        circle.addDblClickHandler(new DblClickMapHandler() {
+            @Override
+            public void onEvent(DblClickMapEvent event) {
+                if (circleDoubleClickListener != null) {
+                    GoogleMapCircle vCircle = circleMap.get(circle);
+                    circleDoubleClickListener.circleDoubleClicked(vCircle);
+                }
+            }
+        });
+        circle.addRadiusChangeHandler(new RadiusChangeMapHandler() {
+            @Override
+            public void onEvent(RadiusChangeMapEvent event) {
+                GoogleMapCircle vCircle = circleMap.get(circle);
+                double oldRadius = vCircle.getRadius();
+                vCircle.setRadius(circle.getRadius());
+                if (circleRadiusChangeListener != null && vCircle.getRadius() != oldRadius) {
+                    circleRadiusChangeListener.radiusChange(vCircle, oldRadius);
+                }
+            }
+        });
     }
 
     public void setPolylineOverlays(Set<GoogleMapPolyline> polylineOverlays) {
@@ -850,10 +959,15 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
         final com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions vPolygonOptions = vOptions.getPolygonOptions();
         options.setPolygonOptions(GoogleMapAdapterUtils.toPolygonOptions(vPolygonOptions));
+
+        final com.vaadin.tapio.googlemaps.client.drawing.CircleOptions vCircleOptions = vOptions.getCircleOptions();
+        options.setCircleOptions(GoogleMapAdapterUtils.toCircleOptions(vCircleOptions));
+
         drawingManager = DrawingManager.newInstance(options);
         drawingManager.setMap(map);
 
         drawingManager.addPolygonCompleteHandler(new PolygonCompleteMapHandler(vPolygonOptions));
+        drawingManager.addCircleCompleteHandler(new CircleCompleteMapHandler(vCircleOptions));
     }
 
     private void attachPolygonEditListeners(final Polygon polygon,
@@ -887,6 +1001,19 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private void firePolygonEdited(Polygon polygon, GoogleMapPolygon
             vPolygon, int idx, PolygonEditListener.ActionType action) {
         LatLng latLng = polygon.getPath().get(idx);
+        switch (action) {
+            case INSERT:
+                vPolygon.getCoordinates().add(idx, GoogleMapAdapterUtils.fromLatLng(latLng));
+                break;
+            case REMOVE:
+                vPolygon.getCoordinates().remove(idx);
+                break;
+            case SET:
+                LatLon existing = vPolygon.getCoordinates().get(idx);
+                existing.setLat(latLng.getLatitude());
+                existing.setLon(latLng.getLongitude());
+                break;
+        }
         polygonEditListener.polygonEdited(vPolygon, action, idx,
                 new LatLon(latLng.getLatitude(), latLng.getLongitude()));
     }
@@ -932,6 +1059,41 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             polygonMap.put(polygon, vPolygon);
             attachPolygonEditListeners(polygon, vPolygon);
             polygonCompleteListener.polygonComplete(vPolygon);
+        }
+    }
+
+    private class CircleCompleteMapHandler implements
+            com.google.gwt.maps.client.events.overlaycomplete.circle.CircleCompleteMapHandler {
+
+        private final com.vaadin.tapio.googlemaps.client.drawing.CircleOptions circleOptions;
+
+        public CircleCompleteMapHandler(com.vaadin.tapio.googlemaps.client.drawing.CircleOptions circleOptions) {
+            this.circleOptions = circleOptions;
+        }
+
+        @Override
+        public void onEvent(CircleCompleteMapEvent event) {
+            Circle circle = event.getCircle();
+
+            GoogleMapCircle vCircle = new GoogleMapCircle();
+            vCircle.setRadius(circle.getRadius());
+            vCircle.setCenter(GoogleMapAdapterUtils.fromLatLng(circle.getCenter()));
+
+            if (circleOptions != null) {
+                vCircle.setFillColor(circleOptions.getFillColor());
+                vCircle.setFillOpacity(circleOptions.getFillOpacity());
+                vCircle.setStrokeColor(circleOptions.getStrokeColor());
+                vCircle.setStrokeOpacity(circleOptions.getStrokeOpacity());
+                vCircle.setStrokeWeight(circleOptions.getStrokeWeight());
+                vCircle.setStrokeColor(circleOptions.getStrokeColor());
+                vCircle.setzIndex(circleOptions.getZIndex());
+                vCircle.setStrokeColor(circleOptions.getStrokeColor());
+            }
+
+            vCircle.setEditable(circle.getEditable());
+            circleMap.put(circle, vCircle);
+            attachCircleListeners(circle);
+            circleCompleteListener.circleComplete(vCircle);
         }
     }
 

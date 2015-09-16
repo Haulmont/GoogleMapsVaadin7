@@ -11,6 +11,7 @@ public class DrawingOptions implements Serializable {
     private static final long serialVersionUID = -806817086700404391L;
 
     protected PolygonOptions polygonOptions;
+    protected CircleOptions circleOptions;
     protected OverlayType initialDrawingMode;
     protected boolean enableDrawingControl;
     protected DrawingControlOptions drawingControlOptions;
@@ -24,6 +25,14 @@ public class DrawingOptions implements Serializable {
 
     public void setPolygonOptions(PolygonOptions polygonOptions) {
         this.polygonOptions = polygonOptions;
+    }
+
+    public CircleOptions getCircleOptions() {
+        return circleOptions;
+    }
+
+    public void setCircleOptions(CircleOptions circleOptions) {
+        this.circleOptions = circleOptions;
     }
 
     public OverlayType getInitialDrawingMode() {

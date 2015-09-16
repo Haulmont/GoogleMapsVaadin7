@@ -1,4 +1,4 @@
-package com.vaadin.tapio.googlemaps.client.events;
+package com.vaadin.tapio.googlemaps.client.events.click;
 
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 
