@@ -311,6 +311,28 @@ public class DemoUI extends UI {
             }
         });
         buttonLayoutRow2.addComponent(addPolyLineButton2);
+
+        Button addCircleButton = new Button(
+                "Add cicle with radius 2km", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent event) {
+                GoogleMapCircle circle = new GoogleMapCircle(new LatLon(60.448118, 22.253738), 2000);
+                circle.setFillColor("#22bb22");
+                circle.setFillOpacity(0.2);
+                circle.setEditable(true);
+                googleMap.addCircleOverlay(circle);
+                googleMap.addCircleRadiusChangeListener(new CircleRadiusChangeListener() {
+                    @Override
+                    public void radiusChange(GoogleMapCircle circle, double v) {
+                        Notification.show("Circle radius changed", Arrays.toString(new Object[]{circle.getId(), "new radius: " + circle.getRadius(), "old radius: " + v}),
+                                Notification.Type.TRAY_NOTIFICATION);
+                    }
+                });
+                event.getButton().setEnabled(false);
+            }
+        });
+        buttonLayoutRow2.addComponent(addCircleButton);
+
         Button changeToTerrainButton = new Button("Change to terrain map",
                 new Button.ClickListener() {
                     @Override

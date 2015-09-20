@@ -38,7 +38,7 @@ public class GoogleMapCircle implements Serializable {
         idCounter++;
     }
 
-    public GoogleMapCircle(LatLon center, int radius) {
+    public GoogleMapCircle(LatLon center, double radius) {
         this();
         this.center = center;
         this.radius = radius;

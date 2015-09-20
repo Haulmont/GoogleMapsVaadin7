@@ -570,7 +570,7 @@ public class GoogleMap extends AbstractComponentContainer {
         circleCompleteListeners.add(listener);
     }
 
-    public void removeCircleListener(CircleCompleteListener listener) {
+    public void removeCircleCompleteListener(CircleCompleteListener listener) {
         circleCompleteListeners.remove(listener);
     }
 
@@ -716,6 +716,23 @@ public class GoogleMap extends AbstractComponentContainer {
      */
     public void removePolygonOverlay(GoogleMapPolygon polygon) {
         getState().polygons.remove(polygon.getId());
+    }
+
+    /**
+     * Adds a circle overlay to the map
+     * @param circle The GoogleMapCircle to add
+     */
+    public void addCircleOverlay(GoogleMapCircle circle) {
+        getState().circles.put(circle.getId(), circle);
+    }
+
+    /**
+     * Removes a circle overlay from the map
+     *
+     * @param circle The GoogleMapCircle to remove
+     */
+    public void removeCircleOverlay(GoogleMapCircle circle) {
+        getState().circles.remove(circle.getId());
     }
 
     /**
