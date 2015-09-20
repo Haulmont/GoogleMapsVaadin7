@@ -54,8 +54,8 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<version>1.0.2.CUBA.3</version>
-			<systemPath>${basedir}/../googlemaps/target/googlemaps-1.0.2.CUBA.3.jar</systemPath>
+			<version>1.0.2.CUBA.4</version>
+			<systemPath>${basedir}/../googlemaps/target/googlemaps-1.0.2.CUBA.4.jar</systemPath>
 			<scope>system</scope>
 		</dependency>
         <dependency>
