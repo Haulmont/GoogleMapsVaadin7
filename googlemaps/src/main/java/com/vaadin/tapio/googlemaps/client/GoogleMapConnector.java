@@ -17,6 +17,7 @@ import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChange
 import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.PolygonClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
@@ -31,6 +32,7 @@ import com.vaadin.tapio.googlemaps.client.rpcs.centerchange.CircleCenterChangeRp
 import com.vaadin.tapio.googlemaps.client.rpcs.click.CircleClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.click.MapClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.click.MarkerClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.PolygonClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.CircleDoubleClickRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.MarkerDoubleClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.CircleCompleteRpc;
@@ -51,7 +53,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
         MarkerDragListener, InfoWindowClosedListener, PolygonCompleteListener, PolygonEditListener,
         MapInitListener, DirectionsResultHandler, CircleClickListener, CircleDoubleClickListener,
-        CircleCompleteListener, CircleRadiusChangeListener, CircleCenterChangeListener {
+        CircleCompleteListener, CircleRadiusChangeListener, CircleCenterChangeListener, PolygonClickListener {
 
     private static final long serialVersionUID = 646346521643L;
 
@@ -68,6 +70,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     private InfoWindowClosedRpc infoWindowClosedRpc = RpcProxy.create(InfoWindowClosedRpc.class, this);
     private PolygonCompleteRpc polygonCompleteRpc = RpcProxy.create(PolygonCompleteRpc.class, this);
     private PolygonEditRpc polygonEditRpc = RpcProxy.create(PolygonEditRpc.class, this);
+    private PolygonClickedRpc polygonClickedRpc = RpcProxy.create(PolygonClickedRpc.class, this);
     private HandleDirectionsResultRpc handleDirectionsResultRpc = RpcProxy.create(HandleDirectionsResultRpc.class, this);
     private CircleClickedRpc circleClickedRpc = RpcProxy.create(CircleClickedRpc.class, this);
     private CircleDoubleClickRpc circleDoubleClickRpc = RpcProxy.create(CircleDoubleClickRpc.class, this);
@@ -89,6 +92,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setInfoWindowClosedListener(this);
         getWidget().setPolygonCompleteListener(this);
         getWidget().setPolygonEditListener(this);
+        getWidget().setPolygonClickListener(this);
         getWidget().setDirectionsResultHandler(this);
         getWidget().setCircleClickListener(this);
         getWidget().setCircleDoubleClickListener(this);
@@ -344,6 +348,11 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     @Override
     public void polygonEdited(GoogleMapPolygon polygon, ActionType actionType, int idx, LatLon latLon) {
         polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
+    }
+
+    @Override
+    public void polygonClicked(GoogleMapPolygon polygon) {
+        polygonClickedRpc.polygonClicked(polygon.getId());
     }
 
     @Override

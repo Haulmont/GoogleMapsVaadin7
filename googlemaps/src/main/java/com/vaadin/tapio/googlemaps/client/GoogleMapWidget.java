@@ -57,6 +57,7 @@ import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChange
 import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.PolygonClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
@@ -89,6 +90,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private MarkerDragListener markerDragListener = null;
     private InfoWindowClosedListener infoWindowClosedListener = null;
     private PolygonCompleteListener polygonCompleteListener = null;
+    private PolygonClickListener polygonClickListener = null;
     private CircleCompleteListener circleCompleteListener = null;
     private CircleClickListener circleClickListener = null;
     private CircleCenterChangeListener circleCenterChangeListener = null;
@@ -449,6 +451,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         polygonEditListener = listener;
     }
 
+    public void setPolygonClickListener(PolygonClickListener listener) {
+        polygonClickListener = listener;
+    }
+
     public void setDirectionsResultHandler(DirectionsResultHandler handler) {
         directionsResultHandler = handler;
     }
@@ -646,8 +652,13 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             @Override
             public void onEvent(ClickMapEvent event) {
                 if (circleClickListener != null) {
-                    GoogleMapCircle vCircle = circleMap.get(circle);
-                    circleClickListener.circleClicked(vCircle);
+                    final GoogleMapCircle vCircle = circleMap.get(circle);
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        @Override
+                        public void execute() {
+                            circleClickListener.circleClicked(vCircle);
+                        }
+                    });
                 }
             }
         });
@@ -655,8 +666,13 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             @Override
             public void onEvent(DblClickMapEvent event) {
                 if (circleDoubleClickListener != null) {
-                    GoogleMapCircle vCircle = circleMap.get(circle);
-                    circleDoubleClickListener.circleDoubleClicked(vCircle);
+                    final GoogleMapCircle vCircle = circleMap.get(circle);
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        @Override
+                        public void execute() {
+                            circleDoubleClickListener.circleDoubleClicked(vCircle);
+                        }
+                    });
                 }
             }
         });
@@ -972,6 +988,17 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     private void attachPolygonEditListeners(final Polygon polygon,
             final GoogleMapPolygon vPolygon) {
+        polygon.addClickHandler(new ClickMapHandler() {
+            @Override
+            public void onEvent(ClickMapEvent event) {
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    @Override
+                    public void execute() {
+                        polygonClickListener.polygonClicked(vPolygon);
+                    }
+                });
+            }
+        });
         MVCArray path = polygon.getPath();
         if (path != null) {
             path.addInsertAtHandler(new InsertAtMapHandler() {
