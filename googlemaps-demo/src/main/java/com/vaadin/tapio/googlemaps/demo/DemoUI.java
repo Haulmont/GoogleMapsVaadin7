@@ -14,8 +14,10 @@ import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
 import com.vaadin.tapio.googlemaps.client.drawing.*;
 import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.PolygonClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
@@ -116,6 +118,23 @@ public class DemoUI extends UI {
 
         addRoute(googleMap);
 
+        googleMap.addPolygonClickListener(new PolygonClickListener() {
+            @Override
+            public void polygonClicked(GoogleMapPolygon googleMapPolygon) {
+                Label consoleEntry = new Label("Polygon "
+                        + googleMapPolygon.getId() + " clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
+
+        googleMap.addCircleClickListener(new CircleClickListener() {
+            @Override
+            public void circleClicked(GoogleMapCircle circle) {
+                Label consoleEntry = new Label("Cirlce "
+                        + circle.getId() + " clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
         googleMap.addMarkerClickListener(new MarkerClickListener() {
             @Override
             public void markerClicked(GoogleMapMarker clickedMarker) {
@@ -136,6 +155,8 @@ public class DemoUI extends UI {
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
+
+
 
         googleMap.addMapMoveListener(new MapMoveListener() {
             @Override

@@ -11,6 +11,7 @@ import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChange
 import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.events.click.PolygonClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.CircleDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
@@ -24,6 +25,7 @@ import com.vaadin.tapio.googlemaps.client.rpcs.centerchange.CircleCenterChangeRp
 import com.vaadin.tapio.googlemaps.client.rpcs.click.CircleClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.click.MapClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.click.MarkerClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.click.PolygonClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.CircleDoubleClickRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.MarkerDoubleClickedRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.CircleCompleteRpc;
@@ -255,6 +257,18 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
+    private PolygonClickedRpc polygonClickedRpc = new PolygonClickedRpc() {
+        private static final long serialVersionUID = -8630070910806102818L;
+
+        @Override
+        public void polygonClicked(long polygonId) {
+            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
+            for (PolygonClickListener listener : polygonClickListeners) {
+                listener.polygonClicked(polygon);
+            }
+        }
+    };
+
     private CircleDoubleClickRpc circleDoubleClickRpc = new CircleDoubleClickRpc() {
 
         private static final long serialVersionUID = 3257369147581938217L;
@@ -322,6 +336,8 @@ public class GoogleMap extends AbstractComponentContainer {
 
     private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
 
+    private List<PolygonClickListener> polygonClickListeners = new ArrayList<PolygonClickListener>();
+
     private List<CircleCompleteListener> circleCompleteListeners = new ArrayList<CircleCompleteListener>();
 
     private List<CircleCenterChangeListener> circleCenterChangeListeners = new ArrayList<CircleCenterChangeListener>();
@@ -373,6 +389,7 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(mapTypeChangedRpc);
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
+        registerRpc(polygonClickedRpc);
         registerRpc(mapInitRpc);
         registerRpc(handleDirectionsResultRpc);
         registerRpc(circleClickedRpc);
@@ -556,6 +573,14 @@ public class GoogleMap extends AbstractComponentContainer {
 
     public void removePolygonCompleteListener(PolygonCompleteListener listener) {
         polygonCompleteListeners.remove(listener);
+    }
+
+    public void addPolygonClickListener(PolygonClickListener listener) {
+        polygonClickListeners.add(listener);
+    }
+
+    public void removePolygonClickListener(PolygonClickListener listener) {
+        polygonClickListeners.remove(listener);
     }
 
     public void addPolygonEditListener(PolygonEditListener listener) {
