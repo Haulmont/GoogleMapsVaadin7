@@ -19,6 +19,7 @@ import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonComplete
 import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
+import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
 import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.rpcs.*;
 import com.vaadin.tapio.googlemaps.client.rpcs.centerchange.CircleCenterChangeRpc;
@@ -816,6 +817,21 @@ public class GoogleMap extends AbstractComponentContainer {
         getState().heatMapLayers.remove(heatMapLayer);
     }
 
+    public void addImageMapType(GoogleImageMapType imageMapType) {
+        getState().imageMapTypes.add(imageMapType);
+    }
+
+    public void removeImageMapType(GoogleImageMapType imageMapType) {
+        getState().imageMapTypes.remove(imageMapType);
+    }
+
+    public void addOverlayImageMapType(GoogleImageMapType imageMapType) {
+        getState().overlayImageMapTypes.add(imageMapType);
+    }
+
+    public void removeOverlayImageMapType(GoogleImageMapType imageMapType) {
+        getState().overlayImageMapTypes.remove(imageMapType);
+    }
 
     /**
      * Sets the type of the base map.
@@ -831,8 +847,12 @@ public class GoogleMap extends AbstractComponentContainer {
      *
      * @return The current MapType.
      */
-    public MapType getMapType() {
-        return MapType.valueOf(getState().mapTypeId);
+    public String getMapType() {
+        return getState().mapTypeId;
+    }
+
+    public void setMapType(String mapTypeId) {
+        getState().mapTypeId = mapTypeId;
     }
 
     /**
@@ -905,6 +925,10 @@ public class GoogleMap extends AbstractComponentContainer {
      */
     public void setControls(Set<GoogleMapControl> controls) {
         getState().controls = controls;
+    }
+
+    public void setMapTypes(List<String> mapTypeIds) {
+        getState().mapTypeIds = new ArrayList<String>(mapTypeIds);
     }
 
     /**

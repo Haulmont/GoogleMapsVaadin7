@@ -188,7 +188,10 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         getWidget().setCircleOverlays(getState().circles);
         getWidget().setKmlLayers(getState().kmlLayers);
         getWidget().setHeatMapLayers(getState().heatMapLayers);
+        getWidget().setImageMapTypes(getState().imageMapTypes);
+        getWidget().setOverlayImageMapTypes(getState().overlayImageMapTypes);
         getWidget().setInfoWindows(getState().infoWindows.values());
+        getWidget().setMapTypes(getState().mapTypeIds);
         getWidget().setMapType(getState().mapTypeId);
         getWidget().setControls(getState().controls);
         getWidget().setDraggable(getState().draggable);
