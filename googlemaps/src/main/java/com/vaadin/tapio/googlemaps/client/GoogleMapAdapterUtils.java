@@ -1,17 +1,24 @@
 package com.vaadin.tapio.googlemaps.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
+import com.google.gwt.maps.client.base.Point;
+import com.google.gwt.maps.client.base.Size;
 import com.google.gwt.maps.client.controls.ControlPosition;
+import com.google.gwt.maps.client.maptypes.ImageMapType;
+import com.google.gwt.maps.client.maptypes.ImageMapTypeOptions;
+import com.google.gwt.maps.client.maptypes.TileUrlCallBack;
 import com.google.gwt.maps.client.overlays.CircleOptions;
 import com.google.gwt.maps.client.overlays.PolygonOptions;
 import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.LatLonBounds;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.drawing.OverlayType;
+import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
 import com.vaadin.tapio.googlemaps.client.services.*;
 
 import java.util.ArrayList;
@@ -351,4 +358,40 @@ public class GoogleMapAdapterUtils {
     public static DirectionsStatus fromDirectionsStatus(com.google.gwt.maps.client.services.DirectionsStatus status) {
         return status != null ? DirectionsStatus.fromValue(status.value()) : null;
     }
+
+    public static ImageMapType toImageMapType(final GoogleImageMapType googleImageMapType) {
+        ImageMapTypeOptions options = ImageMapTypeOptions.newInstance();
+        options.setMaxZoom(googleImageMapType.getMaxZoom());
+        options.setMinZoom(googleImageMapType.getMinZoom());
+        options.setName(googleImageMapType.getName());
+        options.setAlt(googleImageMapType.getAltText());
+        options.setOpacity(googleImageMapType.getOpacity());
+
+        if (googleImageMapType.getTileSize() != null) {
+            com.vaadin.tapio.googlemaps.client.base.Size googleSize = googleImageMapType.getTileSize();
+            Size size = Size.newInstance(googleSize.getWidth(), googleSize.getHeight(),
+                    googleSize.getWidthUnit(), googleSize.getHeightUnit());
+            options.setTileSize(size);
+        }
+
+        if (googleImageMapType.getTileUrlCallbackFunction() != null) {
+            options.setTileUrl(new TileUrlCallBack() {
+                JavaScriptObject tileUrlFunction = toJavaScriptObject(googleImageMapType.getTileUrlCallbackFunction());
+                @Override
+                public String getTileUrl(Point point, int zoomLevel) {
+                    return nativeCall(tileUrlFunction, point.getX(), point.getY(), zoomLevel);
+                }
+            });
+        }
+
+        return ImageMapType.newInstance(options);
+    }
+
+    private native static JavaScriptObject toJavaScriptObject(String tileUrlCallbackFunction) /*-{
+        return eval(tileUrlCallbackFunction);
+    }-*/;
+
+    private native static String nativeCall(JavaScriptObject tileUrlCallbackFunction, double x, double y, int zoom) /*-{
+        return tileUrlCallbackFunction(x, y, zoom);
+    }-*/;
 }

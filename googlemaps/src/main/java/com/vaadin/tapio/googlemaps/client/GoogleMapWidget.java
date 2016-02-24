@@ -11,6 +11,7 @@ import com.google.gwt.maps.client.base.LatLng;
 import com.google.gwt.maps.client.base.LatLngBounds;
 import com.google.gwt.maps.client.base.Point;
 import com.google.gwt.maps.client.base.Size;
+import com.google.gwt.maps.client.controls.MapTypeControlOptions;
 import com.google.gwt.maps.client.drawinglib.DrawingManager;
 import com.google.gwt.maps.client.drawinglib.DrawingManagerOptions;
 import com.google.gwt.maps.client.events.center.CenterChangeMapEvent;
@@ -39,6 +40,7 @@ import com.google.gwt.maps.client.events.tiles.TilesLoadedMapEvent;
 import com.google.gwt.maps.client.events.tiles.TilesLoadedMapHandler;
 import com.google.gwt.maps.client.layers.KmlLayer;
 import com.google.gwt.maps.client.layers.KmlLayerOptions;
+import com.google.gwt.maps.client.maptypes.ImageMapType;
 import com.google.gwt.maps.client.mvc.MVCArray;
 import com.google.gwt.maps.client.overlays.*;
 import com.google.gwt.maps.client.services.DirectionsResult;
@@ -65,6 +67,7 @@ import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonComplete
 import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
+import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
 import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 
@@ -84,6 +87,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<InfoWindow, GoogleMapInfoWindow> infoWindowMap = new HashMap<InfoWindow, GoogleMapInfoWindow>();
     private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
     private Map<HeatMapLayer, GoogleMapHeatMapLayer> heatMapLayerMap = new HashMap<HeatMapLayer, GoogleMapHeatMapLayer>();
+    private Map<ImageMapType, GoogleImageMapType> imageMapTypes = new HashMap<ImageMapType, GoogleImageMapType>();
+    private Map<ImageMapType, GoogleImageMapType> overlayImageMapTypes = new HashMap<ImageMapType, GoogleImageMapType>();
 
     private MarkerClickListener markerClickListener = null;
     private MarkerDoubleClickListener markerDoubleClickListener = null;
@@ -809,10 +814,42 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         }
     }
 
+    public void setImageMapTypes(Set<GoogleImageMapType> mapTypes) {
+        //no need to clear registry, will re-set map types instead
+        imageMapTypes.clear();
+
+        for (GoogleImageMapType mapType : mapTypes) {
+            ImageMapType imageMapType = GoogleMapAdapterUtils.toImageMapType(mapType);
+            map.getMapTypeRegistry().set(mapType.getMapTypeId().toUpperCase(), imageMapType);
+            imageMapTypes.put(imageMapType, mapType);
+        }
+    }
+
+    public void setOverlayImageMapTypes(Set<GoogleImageMapType> mapTypes) {
+        map.getOverlayMapTypes().clear();
+        overlayImageMapTypes.clear();
+
+        for (GoogleImageMapType mapType : mapTypes) {
+            ImageMapType imageMapType = GoogleMapAdapterUtils.toImageMapType(mapType);
+            map.getOverlayMapTypes().insertAt(mapType.getOverlayMapTypePosition(), imageMapType);
+            overlayImageMapTypes.put(imageMapType, mapType);
+        }
+    }
+
     public void setMapType(String mapTypeId) {
-        mapOptions.setMapTypeId(MapTypeId.fromValue(mapTypeId.toLowerCase()));
+        try {
+            MapTypeId standardMapId = MapTypeId.fromValue(mapTypeId.toLowerCase());
+            mapOptions.setMapTypeId(standardMapId);
+        } catch (IllegalArgumentException ignored) {
+            mapOptions.setMapTypeId(mapTypeId);
+        }
         map.setOptions(mapOptions);
     }
+//
+//    public void setMapTypeString(String mapTypeId) {
+//        mapOptions.setMapTypeId(mapTypeId.toUpperCase());
+//        map.setOptions(mapOptions);
+//    }
 
     public void setControls(Set<GoogleMapControl> controls) {
         mapOptions.setMapTypeControl(controls
@@ -1043,6 +1080,15 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         }
         polygonEditListener.polygonEdited(vPolygon, action, idx,
                 new LatLon(latLng.getLatitude(), latLng.getLongitude()));
+    }
+
+    public void setMapTypes(List<String> mapTypeIds) {
+        MapTypeControlOptions mapTypeControlOptions = mapOptions.getMapTypeControlOptions();
+        if (mapTypeControlOptions == null) {
+            mapTypeControlOptions = MapTypeControlOptions.newInstance();
+        }
+        mapTypeControlOptions.setMapTypeIds(mapTypeIds.toArray(new String[mapTypeIds.size()]));
+        mapOptions.setMapTypeControlOptions(mapTypeControlOptions);
     }
 
     private class PolygonCompleteMapHandler implements

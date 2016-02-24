@@ -5,6 +5,7 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
+import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
 import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 
@@ -24,6 +25,7 @@ public class GoogleMapState extends AbstractComponentState {
     // defaults to the language setting of the browser
     public String language = null;
     public String mapTypeId = "Roadmap";
+    public List<String> mapTypeIds = Arrays.asList("Roadmap", "Terrain", "Satellite");
     public LatLon center = new LatLon(51.477811, -0.001475);
     public LatLon boundNE = null;
     public LatLon boundSW = null;
@@ -61,6 +63,8 @@ public class GoogleMapState extends AbstractComponentState {
     public Set<GoogleMapPolyline> polylines = new HashSet<GoogleMapPolyline>();
     public Set<GoogleMapKmlLayer> kmlLayers = new HashSet<GoogleMapKmlLayer>();
     public Set<GoogleMapHeatMapLayer> heatMapLayers = new HashSet<GoogleMapHeatMapLayer>();
+    public Set<GoogleImageMapType> imageMapTypes = new HashSet<GoogleImageMapType>();
+    public Set<GoogleImageMapType> overlayImageMapTypes = new HashSet<GoogleImageMapType>();
 
     public Map<Long, DirectionsRequest> directionsRequests = new HashMap<Long, DirectionsRequest>();
 

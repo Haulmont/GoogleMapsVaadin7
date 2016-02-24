@@ -197,6 +197,18 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             widget.setHeatMapLayers(getState().heatMapLayers);
         }
 
+        if (stateChangeEvent.hasPropertyChanged("imageMapTypes") || initial) {
+            widget.setImageMapTypes(getState().imageMapTypes);
+        }
+
+        if (stateChangeEvent.hasPropertyChanged("overlayImageMapTypes") || initial) {
+            widget.setOverlayImageMapTypes(getState().overlayImageMapTypes);
+        }
+
+        if (stateChangeEvent.hasPropertyChanged("mapTypeIds") || initial) {
+            widget.setMapTypes(getState().mapTypeIds);
+        }
+
         if (stateChangeEvent.hasPropertyChanged("directionsRequests") || initial) {
             widget.processDirectionRequests(getState().directionsRequests.values());
         }
@@ -285,7 +297,10 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         getWidget().setCircleOverlays(getState().circles);
         getWidget().setKmlLayers(getState().kmlLayers);
         getWidget().setHeatMapLayers(getState().heatMapLayers);
+        getWidget().setImageMapTypes(getState().imageMapTypes);
+        getWidget().setOverlayImageMapTypes(getState().overlayImageMapTypes);
         getWidget().setInfoWindows(getState().infoWindows.values());
+        getWidget().setMapTypes(getState().mapTypeIds);
         getWidget().setMapType(getState().mapTypeId);
         getWidget().setControls(getState().controls);
         getWidget().setDraggable(getState().draggable);
