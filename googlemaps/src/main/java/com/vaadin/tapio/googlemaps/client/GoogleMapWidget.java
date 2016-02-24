@@ -26,6 +26,8 @@ import com.google.gwt.maps.client.events.closeclick.CloseClickMapEvent;
 import com.google.gwt.maps.client.events.closeclick.CloseClickMapHandler;
 import com.google.gwt.maps.client.events.dblclick.DblClickMapEvent;
 import com.google.gwt.maps.client.events.dblclick.DblClickMapHandler;
+import com.google.gwt.maps.client.events.domready.DomReadyMapEvent;
+import com.google.gwt.maps.client.events.domready.DomReadyMapHandler;
 import com.google.gwt.maps.client.events.dragend.DragEndMapEvent;
 import com.google.gwt.maps.client.events.dragend.DragEndMapHandler;
 import com.google.gwt.maps.client.events.idle.IdleMapEvent;
@@ -835,8 +837,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             KmlLayerOptions options = KmlLayerOptions.newInstance();
             options.setClickable(gmLayer.isClickable());
             options.setPreserveViewport(gmLayer.isViewportPreserved());
-            options.setSuppressInfoWindows(
-                gmLayer.isInfoWindowRenderingDisabled());
+            options.setSuppressInfoWindows(gmLayer
+                    .isInfoWindowRenderingDisabled());
 
             KmlLayer kmlLayer = KmlLayer.newInstance(gmLayer.getUrl(), options);
             kmlLayer.setMap(map);
@@ -1155,8 +1157,40 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             } else {
                 window.open(options, map);
             }
+
+            window.getWrapped().addDomReadyHandler(new DomReadyMapHandler() {
+                @Override
+                public void onEvent(DomReadyMapEvent event) {
+                    setInfoWindowClass();
+                }
+            });
         }
     }
+
+    private native void setInfoWindowClass() /*-{
+        var infoWindows = $doc.getElementsByClassName("gm-style-iw");
+
+        for (i = 0; i < infoWindows.length; i++) {
+            var infoWindow = infoWindows[i];
+            if (infoWindow.className.indexOf("gm-style-iw-cuba") >= 0) {
+                continue;
+            }
+            infoWindow.className += " gm-style-iw-cuba";
+
+            var rootInfoWindow = infoWindow.parentElement;
+            var rootBubble = rootInfoWindow.firstChild;
+            var closeBtn = rootInfoWindow.lastChild;
+            rootInfoWindow.className = "gm-style-iw-cuba-root";
+            rootBubble.className = "gm-style-iw-cuba-bubble";
+            closeBtn.className = "gm-style-iw-cuba-close";
+
+            var e = rootBubble.firstChild;
+            e.className = "gm-style-iw-cuba-bubble-anchor-shadow";
+            e.nextSibling.className = "gm-style-iw-cuba-bubble-shadow";
+            e.nextSibling.nextSibling.className = "gm-style-iw-cuba-bubble-anchor";
+            rootBubble.lastChild.className = "gm-style-iw-cuba-bubble";
+        }
+    }-*/;
 
     public void fitToBounds(LatLon boundsNE, LatLon boundsSW) {
         LatLng ne = LatLng.newInstance(boundsNE.getLat(), boundsNE.getLon());
