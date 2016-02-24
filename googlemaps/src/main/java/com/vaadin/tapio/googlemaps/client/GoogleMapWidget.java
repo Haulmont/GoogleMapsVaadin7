@@ -22,6 +22,8 @@ import com.google.gwt.maps.client.events.closeclick.CloseClickMapEvent;
 import com.google.gwt.maps.client.events.closeclick.CloseClickMapHandler;
 import com.google.gwt.maps.client.events.dblclick.DblClickMapEvent;
 import com.google.gwt.maps.client.events.dblclick.DblClickMapHandler;
+import com.google.gwt.maps.client.events.domready.DomReadyMapEvent;
+import com.google.gwt.maps.client.events.domready.DomReadyMapHandler;
 import com.google.gwt.maps.client.events.dragend.DragEndMapEvent;
 import com.google.gwt.maps.client.events.dragend.DragEndMapHandler;
 import com.google.gwt.maps.client.events.idle.IdleMapEvent;
@@ -955,6 +957,14 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 options.setZindex(gmWindow.getzIndex());
             }
             final InfoWindow window = InfoWindow.newInstance(options);
+
+            window.addDomReadyHandler(new DomReadyMapHandler() {
+                @Override
+                public void onEvent(DomReadyMapEvent event) {
+                    setInfoWindowClass();
+                }
+            });
+
             if (gmMarkerMap.containsKey(gmWindow.getAnchorMarker())) {
                 window.open(map, gmMarkerMap.get(gmWindow.getAnchorMarker()));
             } else {
@@ -975,6 +985,31 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
         }
     }
+
+    private native void setInfoWindowClass() /*-{
+        var infoWindows = $doc.getElementsByClassName("gm-style-iw");
+
+        for (i = 0; i < infoWindows.length; i++) {
+            var infoWindow = infoWindows[i];
+            if (infoWindow.className.indexOf("gm-style-iw-cuba") >= 0) {
+                continue;
+            }
+            infoWindow.className += " gm-style-iw-cuba";
+
+            var rootInfoWindow = infoWindow.parentElement;
+            var rootBubble = rootInfoWindow.firstChild;
+            var closeBtn = rootInfoWindow.lastChild;
+            rootInfoWindow.className = "gm-style-iw-cuba-root";
+            rootBubble.className = "gm-style-iw-cuba-bubble";
+            closeBtn.className = "gm-style-iw-cuba-close";
+
+            var e = rootBubble.firstChild;
+            e.className = "gm-style-iw-cuba-bubble-anchor-shadow";
+            e.nextSibling.className = "gm-style-iw-cuba-bubble-shadow";
+            e.nextSibling.nextSibling.className = "gm-style-iw-cuba-bubble-anchor";
+            rootBubble.lastChild.className = "gm-style-iw-cuba-bubble";
+        }
+    }-*/;
 
     public void fitToBounds(LatLon boundsNE, LatLon boundsSW) {
         LatLng ne = LatLng.newInstance(boundsNE.getLat(), boundsNE.getLon());
