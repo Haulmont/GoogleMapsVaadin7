@@ -201,6 +201,15 @@ public class DemoUI extends UI {
         });
         buttonLayoutRow3.addComponent(osmOn);
         buttonLayoutRow3.addComponent(osmOff);
+
+        Button moveKakola = new Button("Move Kakola marker", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                LatLon prevPos = kakolaMarker.getPosition();
+                kakolaMarker.setPosition(new LatLon(prevPos.getLat() + 0.03, prevPos.getLon()));
+            }
+        });
+        buttonLayoutRow3.addComponent(moveKakola);
     }
 
     private void createDefaultMapElements(GoogleMap googleMap) {
