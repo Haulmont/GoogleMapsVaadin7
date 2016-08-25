@@ -58,8 +58,8 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public Set<GoogleMapPolyline> polylines = new HashSet<GoogleMapPolyline>();
     public Set<GoogleMapKmlLayer> kmlLayers = new HashSet<GoogleMapKmlLayer>();
     public Set<GoogleMapHeatMapLayer> heatMapLayers = new HashSet<GoogleMapHeatMapLayer>();
-    public Set<GoogleImageMapType> imageMapTypes = new HashSet<GoogleImageMapType>();
-    public Set<GoogleImageMapType> overlayImageMapTypes = new HashSet<GoogleImageMapType>();
+    public Set<GoogleImageMapType> imageMapTypes = new LinkedHashSet<GoogleImageMapType>();
+    public Set<GoogleImageMapType> overlayImageMapTypes = new LinkedHashSet<GoogleImageMapType>();
 
     public Map<Long, DirectionsRequest> directionsRequests = new HashMap<Long, DirectionsRequest>();
 

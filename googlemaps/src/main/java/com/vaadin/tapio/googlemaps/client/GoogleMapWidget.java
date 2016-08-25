@@ -111,8 +111,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<Polyline, GoogleMapPolyline> polylineMap = new HashMap<Polyline, GoogleMapPolyline>();
     private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
     private Map<HeatMapLayer, GoogleMapHeatMapLayer> heatMapLayerMap = new HashMap<HeatMapLayer, GoogleMapHeatMapLayer>();
-    private Map<ImageMapType, GoogleImageMapType> imageMapTypes = new HashMap<ImageMapType, GoogleImageMapType>();
-    private Map<ImageMapType, GoogleImageMapType> overlayImageMapTypes = new HashMap<ImageMapType, GoogleImageMapType>();
+    private Map<ImageMapType, GoogleImageMapType> imageMapTypes = new LinkedHashMap<ImageMapType, GoogleImageMapType>();
+    private Map<ImageMapType, GoogleImageMapType> overlayImageMapTypes = new LinkedHashMap<ImageMapType, GoogleImageMapType>();
 
     private MarkerClickListener markerClickListener = null;
     private MarkerDoubleClickListener markerDoubleClickListener = null;
