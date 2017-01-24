@@ -5,7 +5,7 @@
 	<groupId>com.vaadin.tapio</groupId>
 	<artifactId>googlemaps-demo</artifactId>
 	<packaging>war</packaging>
-	<version>1.0.2.CUBA.8</version>
+	<version>1.0.2.CUBA.10</version>
 	<name>GoogleMaps Add-on Demo</name>
 	<organization>
 		<name>Vaadin/Tapio Aali</name>
@@ -54,14 +54,14 @@
 		<dependency>
 			<groupId>com.vaadin.tapio</groupId>
 			<artifactId>googlemaps</artifactId>
-			<version>1.0.2.CUBA.6</version>
-			<systemPath>${basedir}/../googlemaps/target/googlemaps-1.0.2.CUBA.8.jar</systemPath>
+			<version>1.0.2.CUBA.10</version>
+			<systemPath>${basedir}/../googlemaps/target/googlemaps-1.0.2.CUBA.10.jar</systemPath>
 			<scope>system</scope>
 		</dependency>
         <dependency>
             <groupId>com.github.branflake2267</groupId>
             <artifactId>gwt-maps-api</artifactId>
-            <version>3.9.0-build-17</version>
+            <version>3.10.0-alpha-7</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.gwt</groupId>

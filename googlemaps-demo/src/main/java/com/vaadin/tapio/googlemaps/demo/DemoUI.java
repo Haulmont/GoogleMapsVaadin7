@@ -259,7 +259,7 @@ public class DemoUI extends UI {
 //    }
 
     private GoogleMap createGoogleMap() {
-        return new GoogleMap(new LatLon(60.440963, 22.25122), 10, apiKey, new MapInitListener() {
+        return new GoogleMap(new LatLon(60.440963, 22.25122), 10, apiKey, null, null, new MapInitListener() {
             @Override
             public void init(LatLon center, int zoom, LatLon boundNE, LatLon boundSW) {
                 Preconditions.checkNotNull(center);
@@ -571,6 +571,23 @@ public class DemoUI extends UI {
                 }
             }
         });
+
+
+        request = new DirectionsRequest(origin, destination, TravelMode.DRIVING);
+        map.route(request, new DirectionsResultCallback() {
+            @Override
+            public void onCallback(DirectionsResult directionsResult, DirectionsStatus directionsStatus) {
+                if (directionsStatus == DirectionsStatus.OK && directionsResult.getRoutes() != null
+                        && !directionsResult.getRoutes().isEmpty()) {
+                    DirectionsRoute route = directionsResult.getRoutes().get(0);
+                    GoogleMapPolyline polyline = new GoogleMapPolyline(route.getOverviewPath());
+                    polyline.setStrokeWeight(5);
+                    polyline.setStrokeOpacity(0.5);
+                    polyline.setStrokeColor("#ff0000");
+                    map.addPolyline(polyline);
+                }
+            }
+        });
     }
 
     public Component getDrawingTabContent() {
@@ -581,7 +598,7 @@ public class DemoUI extends UI {
         mapAndOptionsLayout.setSizeFull();
 
         final GoogleMap googleMap = new GoogleMap(
-                new LatLon(60.440963, 22.25122), 10, apiKey);
+                new LatLon(60.440963, 22.25122), 10, apiKey, null, null);
         googleMap.setSizeFull();
 
         // General Options

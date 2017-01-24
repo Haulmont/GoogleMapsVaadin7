@@ -39,7 +39,7 @@ import java.util.*;
 
 /**
  * The class representing Google Maps.
- * 
+ *
  * @author Tapio Aali <tapio@vaadin.com>
  */
 public class GoogleMap extends com.vaadin.ui.AbstractComponent {
@@ -100,7 +100,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
-                LatLon boundsSW) {
+                             LatLon boundsSW) {
             getState().locationFromClient = true;
             getState().zoom = zoomLevel;
             getState().center = center;
@@ -192,7 +192,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
             if (actionType == null || latLon == null) {
                 return;
             }
-            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
+            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
             if (polygon == null) {
                 return;
             }
@@ -240,7 +240,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void circleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             for (CircleClickListener listener : circleClickListeners) {
                 listener.circleClicked(circle);
             }
@@ -252,7 +252,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void polygonClicked(long polygonId) {
-            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
+            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
             for (PolygonClickListener listener : polygonClickListeners) {
                 listener.polygonClicked(polygon);
             }
@@ -265,7 +265,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void circleDoubleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             for (CircleDoubleClickListener listener : circleDoubleClickListeners) {
                 listener.circleDoubleClicked(circle);
             }
@@ -278,7 +278,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void centerChanged(long circleId, LatLon newCenter) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             LatLon oldCenter = circle.getCenter();
             circle.setCenter(newCenter);
             for (CircleCenterChangeListener listener : circleCenterChangeListeners) {
@@ -293,7 +293,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void radiusChanged(long circleId, double newRadius) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             double oldRadius = circle.getRadius();
             circle.setRadius(newRadius);
             for (CircleRadiusChangeListener listener : circleRadiusChangeListeners) {
@@ -336,18 +336,28 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Initiates a new GoogleMap object with default settings from the
      * {@link GoogleMapState state object}.
-     * 
-     * @param apiKeyOrClientId
-     *            The Maps API key from Google or the client ID for the Business
-     *            API. All client IDs begin with a gme- prefix. Not required
-     *            when developing in localhost.
+     *
+     * @param apiKey   The Maps API key from Google. Not required when developing in
+     *                 localhost or when using a client id. Use null or empty string
+     *                 to disable.
+     * @param clientId Google Maps API for Work client ID. Use this instead of API
+     *                 key if available. Use null or empty string to disable.
+     * @param language The language to use with maps. See
+     *                 https://developers.google.com/maps/faq#languagesupport for the
+     *                 list of the supported languages. Use null or empty string to
+     *                 disable.
      */
-    public GoogleMap(String apiKeyOrClientId) {
-        if (isClientId(apiKeyOrClientId)) {
-            getState().clientId = apiKeyOrClientId;
-        } else {
-            getState().apiKey = apiKeyOrClientId;
+    public GoogleMap(String apiKey, String clientId, String language) {
+        if (apiKey != null && !apiKey.isEmpty()) {
+            getState().apiKey = apiKey;
         }
+        if (clientId != null && !clientId.isEmpty()) {
+            getState().clientId = clientId;
+        }
+        if (language != null && !language.isEmpty()) {
+            getState().language = language;
+        }
+
         registerRpc(markerClickedRpc);
         registerRpc(markerDoubleClickedRpc);
         registerRpc(mapMovedRpc);
@@ -369,34 +379,31 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Creates a new GoogleMap object with the given center. Other settings will
      * be {@link GoogleMapState defaults of the state object}.
-     * 
-     * @param center
-     *            Coordinates of the center.
-     * @param apiKeyOrClientId
-     *            The Maps API key from Google or the client ID for the Business
-     *            API. All client IDs begin with a gme- prefix. Not required
-     *            when developing in localhost.
+     *
+     * @param center   Coordinates of the center.
+     * @param apiKey   The Maps server key from Google
+     * @param clientId the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                 when developing in localhost.
+     * @param language language
      */
-    public GoogleMap(LatLon center, String apiKeyOrClientId) {
-        this(apiKeyOrClientId);
+    public GoogleMap(LatLon center, String apiKey, String clientId, String language) {
+        this(apiKey, clientId, language);
         getState().center = center;
     }
 
     /**
      * Creates a new GoogleMap object with the given center and zoom. Other
      * settings will be {@link GoogleMapState defaults of the state object}.
-     * 
-     * @param center
-     *            Coordinates of the center.
-     * @param zoom
-     *            Amount of zoom.
-     * @param apiKeyOrClientId
-     *            The Maps API key from Google or the client ID for the Business
-     *            API. All client IDs begin with a gme- prefix. Not required
-     *            when developing in localhost.
+     *
+     * @param center   Coordinates of the center.
+     * @param zoom     Amount of zoom.
+     * @param apiKey   The Maps server key from Google
+     * @param clientId the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                 when developing in localhost.
+     * @param language language
      */
-    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId) {
-        this(apiKeyOrClientId);
+    public GoogleMap(LatLon center, int zoom, String apiKey, String clientId, String language) {
+        this(apiKey, clientId, language);
         getState().zoom = zoom;
         getState().center = center;
     }
@@ -406,48 +413,21 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * to set init listener. Other settings will be
      * {@link GoogleMapState defaults of the state object}.
      *
-     * @param center
-     *              Coordinates of the center.
-     * @param zoom
-     *              Amount of zoom.
-     * @param apiKeyOrClientId The Maps API key from Google or the client ID for the Business
-     *            API. All client IDs begin with a gme- prefix. Not required
-     *            when developing in localhost.
+     * @param center       Coordinates of the center.
+     * @param zoom         Amount of zoom.
+     * @param apiKey       The Maps server key from Google
+     * @param clientId     the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                     when developing in localhost.
+     * @param language     language
      * @param initListener listener which will be called once, on map initialization. Map initialization
      *                     corresponds to "tilesloaded" event in google map api v3.
      */
-    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId,
+    public GoogleMap(LatLon center, int zoom, String apiKey, String clientId, String language,
                      MapInitListener initListener) {
-        this(apiKeyOrClientId);
+        this(apiKey, clientId, language);
         getState().zoom = zoom;
         getState().center = center;
         this.initListener = initListener;
-    }
-
-    /**
-     * Creates a new GoogleMap object with the given center, zoom and language.
-     * Other settings will be {@link GoogleMapState defaults of the state
-     * object}.
-     * 
-     * @param center
-     *            Coordinates of the center.
-     * @param zoom
-     *            Amount of zoom.
-     * @param apiKeyOrClientId
-     *            The Maps API key from Google or the client ID for the Business
-     *            API. All client IDs begin with a gme- prefix. Not required
-     *            when developing in localhost.
-     * @param language
-     *            The language to use with maps. See
-     *            https://developers.google.com/maps/faq#languagesupport for the
-     *            list of the supported languages.
-     */
-    public GoogleMap(LatLon center, int zoom, String apiKeyOrClientId,
-            String language) {
-        this(apiKeyOrClientId);
-        getState().zoom = zoom;
-        getState().center = center;
-        getState().language = language;
     }
 
     /*
@@ -462,9 +442,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the center of the map to the given coordinates.
-     * 
-     * @param center
-     *            The new coordinates of the center.
+     *
+     * @param center The new coordinates of the center.
      */
     public void setCenter(LatLon center) {
         getState().locationFromClient = false;
@@ -473,7 +452,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the current position of the center of the map.
-     * 
+     *
      * @return Coordinates of the center.
      */
     public LatLon getCenter() {
@@ -496,9 +475,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Zooms the map to the given value.
-     * 
-     * @param zoom
-     *            New amount of the zoom.
+     *
+     * @param zoom New amount of the zoom.
      */
     public void setZoom(int zoom) {
         getState().locationFromClient = false;
@@ -507,7 +485,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the current zoom of the map.
-     * 
+     *
      * @return Current value of the zoom.
      */
     public int getZoom() {
@@ -516,19 +494,15 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a new marker to the map.
-     * 
-     * @param caption
-     *            Caption of the marker shown when the marker is hovered.
-     * @param position
-     *            Coordinates of the marker on the map.
-     * @param draggable
-     *            Set true to enable dragging of the marker.
-     * @param iconUrl
-     *            The url of the icon of the marker.
+     *
+     * @param caption   Caption of the marker shown when the marker is hovered.
+     * @param position  Coordinates of the marker on the map.
+     * @param draggable Set true to enable dragging of the marker.
+     * @param iconUrl   The url of the icon of the marker.
      * @return GoogleMapMarker object created with the given settings.
      */
     public GoogleMapMarker addMarker(String caption, LatLon position,
-            boolean draggable, String iconUrl) {
+                                     boolean draggable, String iconUrl) {
         GoogleMapMarker marker = new GoogleMapMarker(caption, position,
                 draggable, iconUrl);
         getState().markers.put(marker.getId(), marker);
@@ -537,9 +511,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a marker to the map.
-     * 
-     * @param marker
-     *            The marker to add.
+     *
+     * @param marker The marker to add.
      */
     public void addMarker(GoogleMapMarker marker) {
         getState().markers.put(marker.getId(), marker);
@@ -547,9 +520,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a marker from the map.
-     * 
-     * @param marker
-     *            The marker to remove.
+     *
+     * @param marker The marker to remove.
      */
     public void removeMarker(GoogleMapMarker marker) {
         getState().markers.remove(marker.getId());
@@ -564,9 +536,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if a marker has been added to the map.
-     * 
-     * @param marker
-     *            The marker to check.
+     *
+     * @param marker The marker to check.
      * @return true, if the marker has been added to the map.
      */
     public boolean hasMarker(GoogleMapMarker marker) {
@@ -575,7 +546,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the markers that have been added to he map.
-     * 
+     *
      * @return Set of the markers.
      */
     public Collection<GoogleMapMarker> getMarkers() {
@@ -585,8 +556,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Adds a MarkerClickListener to the map.
      *
-     * @param listener
-     *            The listener to add.
+     * @param listener The listener to add.
      */
     public void addMarkerClickListener(MarkerClickListener listener) {
         markerClickListeners.add(listener);
@@ -595,8 +565,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Removes a MarkerClickListener from the map.
      *
-     * @param listener
-     *            The listener to remove.
+     * @param listener The listener to remove.
      */
     public void removeMarkerClickListener(MarkerClickListener listener) {
         markerClickListeners.remove(listener);
@@ -605,8 +574,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Adds a MarkerDoubleClickListener to the map.
      *
-     * @param listener
-     *            The listener to add.
+     * @param listener The listener to add.
      */
     public void addMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
         markerDoubleClickListeners.add(listener);
@@ -615,8 +583,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Removes a MarkerClickListener from the map.
      *
-     * @param listener
-     *            The listener to remove.
+     * @param listener The listener to remove.
      */
     public void removeMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
         markerDoubleClickListeners.remove(listener);
@@ -624,9 +591,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a MarkerDragListener to the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void addMarkerDragListener(MarkerDragListener listener) {
         markerDragListeners.add(listener);
@@ -698,9 +664,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a MarkerDragListener from the map.
-     * 
-     * @param listener
-     *            The listener to remove.
+     *
+     * @param listener The listener to remove.
      */
     public void removeMarkerDragListener(MarkerDragListener listener) {
         markerDragListeners.remove(listener);
@@ -708,9 +673,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a MapMoveListener to the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void addMapMoveListener(MapMoveListener listener) {
         mapMoveListeners.add(listener);
@@ -718,9 +682,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a MapMoveListener from the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void removeMapMoveListener(MapMoveListener listener) {
         mapMoveListeners.remove(listener);
@@ -728,9 +691,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a MapClickListener to the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void addMapClickListener(MapClickListener listener) {
         mapClickListeners.add(listener);
@@ -738,9 +700,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a MapClickListener from the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void removeMapClickListener(MapClickListener listener) {
         mapClickListeners.remove(listener);
@@ -748,9 +709,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds an InfoWindowClosedListener to the map.
-     * 
-     * @param listener
-     *            The listener to add.
+     *
+     * @param listener The listener to add.
      */
     public void addInfoWindowClosedListener(InfoWindowClosedListener listener) {
         infoWindowClosedListeners.add(listener);
@@ -758,9 +718,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes an InfoWindowClosedListener from the map.
-     * 
-     * @param listener
-     *            The listener to remove.
+     *
+     * @param listener The listener to remove.
      */
     public void removeInfoWindowClosedListener(InfoWindowClosedListener listener) {
         infoWindowClosedListeners.remove(listener);
@@ -768,7 +727,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if limiting of the center bounds is enabled.
-     * 
+     *
      * @return true, if enabled
      */
     public boolean isCenterBoundLimitsEnabled() {
@@ -777,9 +736,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Enables/disables limiting of the center bounds.
-     * 
-     * @param enable
-     *            Set true to enable the limiting.
+     *
+     * @param enable Set true to enable the limiting.
      */
     public void setCenterBoundLimitsEnabled(boolean enable) {
         getState().limitCenterBounds = enable;
@@ -787,11 +745,9 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the limits of the bounds of the center to given values.
-     * 
-     * @param limitNE
-     *            The coordinates of the northeast limit.
-     * @param limitSW
-     *            The coordinates of the southwest limit.
+     *
+     * @param limitNE The coordinates of the northeast limit.
+     * @param limitSW The coordinates of the southwest limit.
      */
     public void setCenterBoundLimits(LatLon limitNE, LatLon limitSW) {
         getState().centerNELimit = limitNE;
@@ -801,9 +757,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a polygon overlay to the map.
-     * 
-     * @param polygon
-     *            The GoogleMapPolygon to add.
+     *
+     * @param polygon The GoogleMapPolygon to add.
      */
     public void addPolygonOverlay(GoogleMapPolygon polygon) {
         getState().polygons.put(polygon.getId(), polygon);
@@ -811,9 +766,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a polygon overlay from the map.
-     * 
-     * @param polygon
-     *            The GoogleMapPolygon to remove.
+     *
+     * @param polygon The GoogleMapPolygon to remove.
      */
     public void removePolygonOverlay(GoogleMapPolygon polygon) {
         getState().polygons.remove(polygon.getId());
@@ -821,6 +775,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a circle overlay to the map
+     *
      * @param circle The GoogleMapCircle to add
      */
     public void addCircleOverlay(GoogleMapCircle circle) {
@@ -838,9 +793,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Adds a polyline to the map.
-     * 
-     * @param polyline
-     *            The GoogleMapPolyline to add.
+     *
+     * @param polyline The GoogleMapPolyline to add.
      */
     public void addPolyline(GoogleMapPolyline polyline) {
         getState().polylines.add(polyline);
@@ -848,9 +802,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Removes a polyline from the map.
-     * 
-     * @param polyline
-     *            The GoogleMapPolyline to add.
+     *
+     * @param polyline The GoogleMapPolyline to add.
      */
     public void removePolyline(GoogleMapPolyline polyline) {
         getState().polylines.remove(polyline);
@@ -859,8 +812,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Adds a KML layer to the map.
      *
-     * @param kmlLayer
-     *            The KML layer to add.
+     * @param kmlLayer The KML layer to add.
      */
     public void addKmlLayer(GoogleMapKmlLayer kmlLayer) {
         getState().kmlLayers.add(kmlLayer);
@@ -869,8 +821,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Removes a KML layer from the map.
      *
-     * @param kmlLayer
-     *            The KML layer to remove.
+     * @param kmlLayer The KML layer to remove.
      */
     public void removeKmlLayer(GoogleMapKmlLayer kmlLayer) {
         getState().kmlLayers.remove(kmlLayer);
@@ -879,8 +830,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Adds a HeatMap layer to the map.
      *
-     * @param heatMapLayer
-     *            The HeatMap layer to add.
+     * @param heatMapLayer The HeatMap layer to add.
      */
     public void addHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.add(heatMapLayer);
@@ -889,8 +839,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Removes a HeatMap layer from the map.
      *
-     * @param heatMapLayer
-     *            The HeatMap layer to remove.
+     * @param heatMapLayer The HeatMap layer to remove.
      */
     public void removeHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.remove(heatMapLayer);
@@ -914,9 +863,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the type of the base map.
-     * 
-     * @param type
-     *            The new MapType to use.
+     *
+     * @param type The new MapType to use.
      */
     public void setMapType(MapType type) {
         getState().mapTypeId = type.name();
@@ -924,7 +872,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the current type of the base map.
-     * 
+     *
      * @return The current MapType.
      */
     public String getMapType() {
@@ -937,7 +885,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if the map is currently draggable.
-     * 
+     *
      * @return true, if the map draggable.
      */
     public boolean isDraggable() {
@@ -946,9 +894,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Enables/disables dragging of the map.
-     * 
-     * @param draggable
-     *            Set to true to enable dragging.
+     *
+     * @param draggable Set to true to enable dragging.
      */
     public void setDraggable(boolean draggable) {
         getState().draggable = draggable;
@@ -956,7 +903,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if the keyboard shortcuts are enabled.
-     * 
+     *
      * @return true, if the shortcuts are enabled.
      */
     public boolean areKeyboardShortcutsEnabled() {
@@ -965,9 +912,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Enables/disables the keyboard shortcuts.
-     * 
-     * @param enabled
-     *            Set true to enable keyboard shortcuts.
+     *
+     * @param enabled Set true to enable keyboard shortcuts.
      */
     public void setKeyboardShortcutsEnabled(boolean enabled) {
         getState().keyboardShortcutsEnabled = enabled;
@@ -975,7 +921,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if the scroll wheel is enabled.
-     * 
+     *
      * @return true, if the scroll wheel is enabled
      */
     public boolean isScrollWheelEnabled() {
@@ -984,9 +930,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Enables/disables the scroll wheel.
-     * 
-     * @param enabled
-     *            Set true to enable scroll wheel.
+     *
+     * @param enabled Set true to enable scroll wheel.
      */
     public void setScrollWheelEnabled(boolean enabled) {
         getState().scrollWheelEnabled = enabled;
@@ -994,7 +939,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the currently enabled map controls.
-     * 
+     *
      * @return Currently enabled map controls.
      */
     public Set<GoogleMapControl> getControls() {
@@ -1003,9 +948,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the controls of the map.
-     * 
-     * @param controls
-     *            The new controls to use.
+     *
+     * @param controls The new controls to use.
      */
     public void setControls(Set<GoogleMapControl> controls) {
         getState().controls = controls;
@@ -1018,9 +962,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Enables the given control on the map. Does nothing if the control is
      * already enabled.
-     * 
-     * @param control
-     *            The control to enable.
+     *
+     * @param control The control to enable.
      */
     public void addControl(GoogleMapControl control) {
         getState().controls.add(control);
@@ -1029,9 +972,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Removes the control from the map. Does nothing if the control isn't
      * enabled.
-     * 
-     * @param control
-     *            The control to remove.
+     *
+     * @param control The control to remove.
      */
     public void removeControl(GoogleMapControl control) {
         getState().controls.remove(control);
@@ -1039,9 +981,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Enables/disables limiting of the bounds of the visible area.
-     * 
-     * @param enabled
-     *            Set true to enable the limiting.
+     *
+     * @param enabled Set true to enable the limiting.
      */
     public void setVisibleAreaBoundLimitsEnabled(boolean enabled) {
         getState().limitVisibleAreaBounds = enabled;
@@ -1050,7 +991,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if limiting of the bounds of the visible area is enabled.
-     * 
+     *
      * @return true if enabled
      */
     public boolean isVisibleAreaBoundLimitsEnabled() {
@@ -1061,11 +1002,9 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * Sets the limits of the bounds of the visible area to the given values.
      * NOTE: Using the feature does not affect zooming, consider using
      * {@link #setMinZoom(int)} too.
-     * 
-     * @param limitNE
-     *            The coordinates of the northeast limit.
-     * @param limitSW
-     *            The coordinates of the southwest limit.
+     *
+     * @param limitNE The coordinates of the northeast limit.
+     * @param limitSW The coordinates of the southwest limit.
      */
     public void setVisibleAreaBoundLimits(LatLon limitNE, LatLon limitSW) {
         getState().visibleAreaNELimit = limitNE;
@@ -1075,9 +1014,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the maximum allowed amount of zoom (default 21.0).
-     * 
-     * @param maxZoom
-     *            The maximum amount for zoom.
+     *
+     * @param maxZoom The maximum amount for zoom.
      */
     public void setMaxZoom(int maxZoom) {
         getState().maxZoom = maxZoom;
@@ -1085,7 +1023,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the current maximum amount of zoom.
-     * 
+     *
      * @return maximum amount of zoom
      */
     public int getMaxZoom() {
@@ -1094,9 +1032,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Sets the minimum allowed amount of zoom (default 0.0).
-     * 
-     * @param minZoom
-     *            The minimum amount for zoom.
+     *
+     * @param minZoom The minimum amount for zoom.
      */
     public void setMinZoom(int minZoom) {
         getState().minZoom = minZoom;
@@ -1104,7 +1041,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Returns the current minimum amount of zoom.
-     * 
+     *
      * @return minimum amount of zoom
      */
     public int getMinZoom() {
@@ -1113,9 +1050,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Opens an info window.
-     * 
-     * @param infoWindow
-     *            The window to open.
+     *
+     * @param infoWindow The window to open.
      */
     public void openInfoWindow(GoogleMapInfoWindow infoWindow) {
         getState().infoWindows.put(infoWindow.getId(), infoWindow);
@@ -1123,9 +1059,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Closes an info window.
-     * 
-     * @param infoWindow
-     *            The window to close.
+     *
+     * @param infoWindow The window to close.
      */
     public void closeInfoWindow(GoogleMapInfoWindow infoWindow) {
         getState().infoWindows.remove(infoWindow.getId());
@@ -1133,9 +1068,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if an info window is open.
-     * 
-     * @param infoWindow
-     *            The window to check.
+     *
+     * @param infoWindow The window to check.
      * @return true, if the window is open.
      */
     public boolean isInfoWindowOpen(GoogleMapInfoWindow infoWindow) {
@@ -1145,9 +1079,8 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Enables/disables new visual style of the map. NOTICE: this must be set
      * before rendering the map.
-     * 
-     * @param enabled
-     *            Set true to enable (defaul false).
+     *
+     * @param enabled Set true to enable (defaul false).
      */
     public void setVisualRefreshEnabled(boolean enabled) {
         getState().visualRefreshEnabled = enabled;
@@ -1155,7 +1088,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     /**
      * Checks if the new visual style is enabled.
-     * 
+     *
      * @return true, if visual refresh is enabled
      */
     public boolean isVisualRefreshEnabled() {
@@ -1165,11 +1098,9 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     /**
      * Tries to fit the visible area of the map inside given boundaries by
      * modifying zoom and/or center.
-     * 
-     * @param boundsNE
-     *            The northeast boundaries.
-     * @param boundsSW
-     *            The southwest boundaries.
+     *
+     * @param boundsNE The northeast boundaries.
+     * @param boundsSW The southwest boundaries.
      */
     public void fitToBounds(LatLon boundsNE, LatLon boundsSW) {
         getState().fitToBoundsNE = boundsNE;

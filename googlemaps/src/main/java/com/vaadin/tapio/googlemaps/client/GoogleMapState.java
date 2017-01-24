@@ -76,8 +76,5 @@ public class GoogleMapState extends AbstractComponentState {
 
     public Map<Long, GoogleMapCircle> circles = new HashMap<Long, GoogleMapCircle>();
 
-    public boolean isBusiness() {
-        return clientId != null;
-    }
-
+    public String apiUrl = null;
 }

@@ -42,6 +42,7 @@ import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * The connector for the Google Maps JavaScript API v3.
@@ -57,6 +58,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
     private static final long serialVersionUID = 646346521643L;
 
+    public static boolean loadingApi = false;
     protected static boolean apiLoaded = false;
     protected static boolean mapInitiated = false;
 
@@ -269,27 +271,85 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
     }
 
-    private void loadMapApi() {
-        StringBuilder otherParams = new StringBuilder();
-        if (getState().language != null) {
-            otherParams.append("&language=").append(getState().language);
+    protected void loadMapApi() {
+        if (loadingApi) {
+            return;
         }
-
+        loadingApi = true;
         ArrayList<LoadApi.LoadLibrary> loadLibraries = new ArrayList<LoadApi.LoadLibrary>();
         loadLibraries.add(LoadApi.LoadLibrary.DRAWING);
         loadLibraries.add(LoadApi.LoadLibrary.VISUALIZATION);
 
-        Runnable callback = new Runnable() {
+        Runnable onLoad = new Runnable() {
+            @Override
             public void run() {
+                apiLoaded = true;
+                loadingApi = false;
                 initMap();
             }
         };
 
-        AjaxLoader.init(getState().apiKey);
-        
-        LoadApi.go(callback, loadLibraries, false, otherParams.toString());
+        LoadApi.Language language = null;
+        if (getState().language != null) {
+            language = LoadApi.Language.fromValue(getState().language);
+        }
+
+        String params = null;
+        if (getState().clientId != null) {
+            params = "client=" + getState().clientId;
+        } else if (getState().apiKey != null) {
+            params = "key=" + getState().apiKey;
+        }
+
+        if (getState().apiUrl != null) {
+            AjaxLoader.init(getState().apiKey, getState().apiUrl);
+        }
+
+        load(onLoad, loadLibraries, language, params);
     }
 
+    private static void load(Runnable onLoad, ArrayList<LoadApi.LoadLibrary> loadLibraries, LoadApi.Language language, String otherParams) {
+        String op = "";
+        if(otherParams != null) {
+            op = op + "&" + otherParams;
+        }
+
+        if(loadLibraries != null) {
+            op = op + "&" + getLibraries(loadLibraries);
+        }
+
+        if(language != null) {
+            op = op + "&language=" + language.getValue();
+        }
+
+        AjaxLoader.AjaxLoaderOptions settings = AjaxLoader.AjaxLoaderOptions.newInstance();
+        settings.setOtherParms(op);
+        AjaxLoader.loadApi("maps", "3.25", onLoad, settings);
+    }
+
+    private static String getLibraries(ArrayList<LoadApi.LoadLibrary> loadLibraries) {
+        if(loadLibraries == null) {
+            return "";
+        } else {
+            String s = "libraries=";
+            Iterator itr = loadLibraries.iterator();
+            int i = 0;
+
+            while(itr.hasNext()) {
+                LoadApi.LoadLibrary ll = (LoadApi.LoadLibrary)itr.next();
+                if(ll != null) {
+                    if(i > 0) {
+                        s = s + ",";
+                    }
+
+                    s = s + ll.value();
+                    ++i;
+                }
+            }
+
+            return s;
+        }
+    }
     private void loadDeferred() {
         getWidget().setMarkers(getState().markers.values());
         getWidget().setPolygonOverlays(getState().polygons);

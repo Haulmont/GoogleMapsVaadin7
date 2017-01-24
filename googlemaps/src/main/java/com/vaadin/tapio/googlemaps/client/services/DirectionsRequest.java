@@ -120,4 +120,45 @@ public class DirectionsRequest implements Serializable {
     public long getId() {
         return id;
     }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        DirectionsRequest that = (DirectionsRequest) o;
+
+        if (id != that.id) return false;
+        if (avoidHighways != that.avoidHighways) return false;
+        if (avoidTolls != that.avoidTolls) return false;
+        if (optimizeWaypoints != that.optimizeWaypoints) return false;
+        if (provideRouteAlternatives != that.provideRouteAlternatives) return false;
+        if (waypoints != null ? !waypoints.equals(that.waypoints) : that.waypoints != null) return false;
+        if (origin != null ? !origin.equals(that.origin) : that.origin != null) return false;
+        if (destination != null ? !destination.equals(that.destination) : that.destination != null) return false;
+        if (region != null ? !region.equals(that.region) : that.region != null) return false;
+        if (travelMode != that.travelMode) return false;
+        return unitSystem == that.unitSystem;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + (waypoints != null ? waypoints.hashCode() : 0);
+        result = 31 * result + (avoidHighways ? 1 : 0);
+        result = 31 * result + (avoidTolls ? 1 : 0);
+        result = 31 * result + (optimizeWaypoints ? 1 : 0);
+        result = 31 * result + (provideRouteAlternatives ? 1 : 0);
+        result = 31 * result + (origin != null ? origin.hashCode() : 0);
+        result = 31 * result + (destination != null ? destination.hashCode() : 0);
+        result = 31 * result + (region != null ? region.hashCode() : 0);
+        result = 31 * result + (travelMode != null ? travelMode.hashCode() : 0);
+        result = 31 * result + (unitSystem != null ? unitSystem.hashCode() : 0);
+        return result;
+    }
 }
