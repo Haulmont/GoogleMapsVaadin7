@@ -103,7 +103,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
-                LatLon boundsSW) {
+                             LatLon boundsSW) {
             getState().zoom = zoomLevel;
             getState().center = center;
             getState().boundNE = boundsNE;
@@ -203,7 +203,7 @@ public class GoogleMap extends AbstractComponentContainer {
             if (actionType == null || latLon == null) {
                 return;
             }
-            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
+            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
             if (polygon == null) {
                 return;
             }
@@ -251,7 +251,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void circleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             for (CircleClickListener listener : circleClickListeners) {
                 listener.circleClicked(circle);
             }
@@ -263,7 +263,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void polygonClicked(long polygonId) {
-            GoogleMapPolygon polygon = ((GoogleMapState)getState(false)).polygons.get(polygonId);
+            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
             for (PolygonClickListener listener : polygonClickListeners) {
                 listener.polygonClicked(polygon);
             }
@@ -276,7 +276,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void circleDoubleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             for (CircleDoubleClickListener listener : circleDoubleClickListeners) {
                 listener.circleDoubleClicked(circle);
             }
@@ -289,7 +289,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void centerChanged(long circleId, LatLon newCenter) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             LatLon oldCenter = circle.getCenter();
             circle.setCenter(newCenter);
             for (CircleCenterChangeListener listener : circleCenterChangeListeners) {
@@ -304,7 +304,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
         @Override
         public void radiusChanged(long circleId, double newRadius) {
-            GoogleMapCircle circle = ((GoogleMapState)getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
             double oldRadius = circle.getRadius();
             circle.setRadius(newRadius);
             for (CircleRadiusChangeListener listener : circleRadiusChangeListeners) {
@@ -376,7 +376,6 @@ public class GoogleMap extends AbstractComponentContainer {
         if (clientId != null && !clientId.isEmpty()) {
             getState().clientId = clientId;
         }
-
         if (language != null && !language.isEmpty()) {
             getState().language = language;
         }
@@ -398,6 +397,60 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(circleCenterChangeRpc);
         registerRpc(circleCompleteRpc);
         registerRpc(circleRadiusChangeRpc);
+    }
+
+    /**
+     * Creates a new GoogleMap object with the given center. Other settings will
+     * be {@link GoogleMapState defaults of the state object}.
+     *
+     * @param center   Coordinates of the center.
+     * @param apiKey   The Maps server key from Google
+     * @param clientId the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                 when developing in localhost.
+     * @param language language
+     */
+    public GoogleMap(LatLon center, String apiKey, String clientId, String language) {
+        this(apiKey, clientId, language);
+        getState().center = center;
+    }
+
+    /**
+     * Creates a new GoogleMap object with the given center and zoom. Other
+     * settings will be {@link GoogleMapState defaults of the state object}.
+     *
+     * @param center   Coordinates of the center.
+     * @param zoom     Amount of zoom.
+     * @param apiKey   The Maps server key from Google
+     * @param clientId the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                 when developing in localhost.
+     * @param language language
+     */
+    public GoogleMap(LatLon center, int zoom, String apiKey, String clientId, String language) {
+        this(apiKey, clientId, language);
+        getState().zoom = zoom;
+        getState().center = center;
+    }
+
+    /**
+     * Creates a new GoogleMap object with the given center, zoom and ability
+     * to set init listener. Other settings will be
+     * {@link GoogleMapState defaults of the state object}.
+     *
+     * @param center       Coordinates of the center.
+     * @param zoom         Amount of zoom.
+     * @param apiKey       The Maps server key from Google
+     * @param clientId     the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                     when developing in localhost.
+     * @param language     language
+     * @param initListener listener which will be called once, on map initialization. Map initialization
+     *                     corresponds to "tilesloaded" event in google map api v3.
+     */
+    public GoogleMap(LatLon center, int zoom, String apiKey, String clientId, String language,
+                     MapInitListener initListener) {
+        this(apiKey, clientId, language);
+        getState().zoom = zoom;
+        getState().center = center;
+        this.initListener = initListener;
     }
 
     /*
@@ -470,7 +523,7 @@ public class GoogleMap extends AbstractComponentContainer {
      * @return GoogleMapMarker object created with the given settings.
      */
     public GoogleMapMarker addMarker(String caption, LatLon position,
-            boolean draggable, String iconUrl) {
+                                     boolean draggable, String iconUrl) {
         GoogleMapMarker marker = new GoogleMapMarker(caption, position,
                 draggable, iconUrl);
         getState().markers.put(marker.getId(), marker);
@@ -542,8 +595,7 @@ public class GoogleMap extends AbstractComponentContainer {
     /**
      * Adds a MarkerDoubleClickListener to the map.
      *
-     * @param listener
-     *            The listener to add.
+     * @param listener The listener to add.
      */
     public void addMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
         markerDoubleClickListeners.add(listener);
@@ -552,8 +604,7 @@ public class GoogleMap extends AbstractComponentContainer {
     /**
      * Removes a MarkerClickListener from the map.
      *
-     * @param listener
-     *            The listener to remove.
+     * @param listener The listener to remove.
      */
     public void removeMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
         markerDoubleClickListeners.remove(listener);
@@ -633,7 +684,7 @@ public class GoogleMap extends AbstractComponentContainer {
     }
 
     /**
-     * Removes a MarkerDragListenr from the map.
+     * Removes a MarkerDragListener from the map.
      *
      * @param listener The listener to remove.
      */
@@ -746,6 +797,7 @@ public class GoogleMap extends AbstractComponentContainer {
 
     /**
      * Adds a circle overlay to the map
+     *
      * @param circle The GoogleMapCircle to add
      */
     public void addCircleOverlay(GoogleMapCircle circle) {
@@ -800,8 +852,7 @@ public class GoogleMap extends AbstractComponentContainer {
     /**
      * Adds a HeatMap layer to the map.
      *
-     * @param heatMapLayer
-     *            The HeatMap layer to add.
+     * @param heatMapLayer The HeatMap layer to add.
      */
     public void addHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.add(heatMapLayer);
@@ -810,8 +861,7 @@ public class GoogleMap extends AbstractComponentContainer {
     /**
      * Removes a HeatMap layer from the map.
      *
-     * @param heatMapLayer
-     *            The HeatMap layer to remove.
+     * @param heatMapLayer The HeatMap layer to remove.
      */
     public void removeHeatMapLayer(GoogleMapHeatMapLayer heatMapLayer) {
         getState().heatMapLayers.remove(heatMapLayer);

@@ -281,7 +281,15 @@ public class DemoUI extends UI {
 //    }
 
     private GoogleMap createGoogleMap() {
-        return new GoogleMap(null, null, null);
+        return new GoogleMap(new LatLon(60.440963, 22.25122), 10, apiKey, null, null, new MapInitListener() {
+            @Override
+            public void init(LatLon center, int zoom, LatLon boundNE, LatLon boundSW) {
+//                Preconditions.checkNotNull(center);
+//                Preconditions.checkArgument(zoom == 10);
+//                Preconditions.checkNotNull(boundNE);
+//                Preconditions.checkNotNull(boundSW);
+            }
+        });
     }
 
     private void createButtonsRow2(VerticalLayout content, final GoogleMap googleMap, final CssLayout consoleLayout) {
@@ -621,6 +629,23 @@ public class DemoUI extends UI {
                 }
             }
         });
+
+
+        request = new DirectionsRequest(origin, destination, TravelMode.DRIVING);
+        map.route(request, new DirectionsResultCallback() {
+            @Override
+            public void onCallback(DirectionsResult directionsResult, DirectionsStatus directionsStatus) {
+                if (directionsStatus == DirectionsStatus.OK && directionsResult.getRoutes() != null
+                        && !directionsResult.getRoutes().isEmpty()) {
+                    DirectionsRoute route = directionsResult.getRoutes().get(0);
+                    GoogleMapPolyline polyline = new GoogleMapPolyline(route.getOverviewPath());
+                    polyline.setStrokeWeight(5);
+                    polyline.setStrokeOpacity(0.5);
+                    polyline.setStrokeColor("#ff0000");
+                    map.addPolyline(polyline);
+                }
+            }
+        });
     }
 
     public Component getDrawingTabContent() {
@@ -630,7 +655,8 @@ public class DemoUI extends UI {
         HorizontalLayout mapAndOptionsLayout = new HorizontalLayout();
         mapAndOptionsLayout.setSizeFull();
 
-        final GoogleMap googleMap = new GoogleMap(apiKey, "clientID", "English");
+        final GoogleMap googleMap = new GoogleMap(
+                new LatLon(60.440963, 22.25122), 10, apiKey, null, null);
         googleMap.setSizeFull();
 
         // General Options

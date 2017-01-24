@@ -128,6 +128,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private PolygonEditListener polygonEditListener = null;
     private DirectionsResultHandler directionsResultHandler = null;
 
+    private DirectionsService directionsService;
+
     protected DrawingManager drawingManager;
     private MapMoveListener mapMoveListener = null;
     private LatLngBounds allowedBoundsCenter = null;
@@ -848,17 +850,12 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     }
 
     public void processDirectionRequests(Collection<DirectionsRequest> requests) {
+        directionsService = DirectionsService.newInstance();
         for (final DirectionsRequest googleMapRequest : requests) {
+            final long id = googleMapRequest.getId();
             final com.google.gwt.maps.client.services.DirectionsRequest request =
                     GoogleMapAdapterUtils.toDirectionsRequest(googleMapRequest);
-            DirectionsService.newInstance().route(request, new com.google.gwt.maps.client.services.DirectionsResultHandler() {
-                @Override
-                public void onCallback(DirectionsResult result, DirectionsStatus status) {
-                    directionsResultHandler.handle(googleMapRequest.getId(),
-                            GoogleMapAdapterUtils.fromDirectionsResult(result),
-                            GoogleMapAdapterUtils.fromDirectionsStatus(status));
-                }
-            });
+            directionsService.route(request, new GoogleDirectionsResultHandler(id));
         }
     }
 
@@ -1412,4 +1409,22 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     native public void consoleLog(String message) /*-{
       console.log(message );
     }-*/;
+
+    private class GoogleDirectionsResultHandler implements com.google.gwt.maps.client.services.DirectionsResultHandler {
+        private final long id;
+        private long requestId;
+
+        public GoogleDirectionsResultHandler(long id) {
+            this.id = id;
+            requestId = id;
+        }
+
+        @Override
+        public void onCallback(DirectionsResult result, DirectionsStatus status) {
+            consoleLog("Callback for direction request with id " + requestId);
+            directionsResultHandler.handle(id,
+                    GoogleMapAdapterUtils.fromDirectionsResult(result),
+                    GoogleMapAdapterUtils.fromDirectionsStatus(status));
+        }
+    }
 }

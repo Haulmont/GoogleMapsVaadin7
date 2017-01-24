@@ -1,10 +1,5 @@
 package com.vaadin.tapio.googlemaps.client;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.ajaxloader.client.AjaxLoader;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.maps.client.LoadApi;
@@ -52,6 +47,12 @@ import com.vaadin.tapio.googlemaps.client.rpcs.radiuschange.CircleRadiusChangeRp
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsStatus;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Connect(GoogleMap.class)
 public class GoogleMapConnector extends AbstractComponentContainerConnector implements
         MarkerClickListener, MarkerDoubleClickListener, MapMoveListener, MapClickListener,
@@ -62,9 +63,8 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
 
     private static final long serialVersionUID = -357262975672050103L;
 
-    public static boolean apiLoaded = false;
-
     public static boolean loadingApi = false;
+    public static boolean apiLoaded = false;
 
     private final List<GoogleMapInitListener> initListeners = new ArrayList<GoogleMapInitListener>();
 
@@ -88,6 +88,38 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     private final MapTypeChangedRpc mapTypeChangedRpc = RpcProxy.create(MapTypeChangedRpc.class, this);
 
     public GoogleMapConnector() {
+    }
+
+    protected void initMap() {
+        getWidget().initMap(getState().center, getState().zoom, getState().mapTypeId, this);
+        getWidget().setMarkerClickListener(this);
+        getWidget().setMarkerDoubleClickListener(this);
+        getWidget().setMapMoveListener(this);
+        getWidget().setMapClickListener(this);
+        getWidget().setMarkerDragListener(this);
+        getWidget().setInfoWindowClosedListener(this);
+        getWidget().setMapTypeChangeListener(this);
+        getWidget().setPolygonCompleteListener(this);
+        getWidget().setPolygonEditListener(this);
+        getWidget().setPolygonClickListener(this);
+        getWidget().setDirectionsResultHandler(this);
+        getWidget().setCircleClickListener(this);
+        getWidget().setCircleDoubleClickListener(this);
+        getWidget().setCircleCompleteListener(this);
+        getWidget().setCircleCenterChangeListener(this);
+        getWidget().setCircleRadiusChangeListener(this);
+        getLayoutManager().addElementResizeListener(getWidget().getElement(),
+            new ElementResizeListener() {
+                @Override
+                public void onElementResize(ElementResizeEvent e) {
+                    getWidget().triggerResize();
+                }
+            });
+        MapWidget map = getWidget().getMap();
+        updateFromState(true);
+        for (GoogleMapInitListener listener : initListeners) {
+            listener.mapWidgetInitiated(map);
+        }
     }
 
     protected void loadMapApi() {
@@ -127,38 +159,49 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
             AjaxLoader.init(getState().apiKey, getState().apiUrl);
         }
 
-        LoadApi.go(onLoad, loadLibraries, false, language, params);
+        load(onLoad, loadLibraries, language, params);
     }
 
-    protected void initMap() {
-        getWidget().initMap(getState().center, getState().zoom, getState().mapTypeId, this);
-        getWidget().setMarkerClickListener(this);
-        getWidget().setMarkerDoubleClickListener(this);
-        getWidget().setMapMoveListener(this);
-        getWidget().setMapClickListener(this);
-        getWidget().setMarkerDragListener(this);
-        getWidget().setInfoWindowClosedListener(this);
-        getWidget().setMapTypeChangeListener(this);
-        getWidget().setPolygonCompleteListener(this);
-        getWidget().setPolygonEditListener(this);
-        getWidget().setPolygonClickListener(this);
-        getWidget().setDirectionsResultHandler(this);
-        getWidget().setCircleClickListener(this);
-        getWidget().setCircleDoubleClickListener(this);
-        getWidget().setCircleCompleteListener(this);
-        getWidget().setCircleCenterChangeListener(this);
-        getWidget().setCircleRadiusChangeListener(this);
-        getLayoutManager().addElementResizeListener(getWidget().getElement(),
-            new ElementResizeListener() {
-                @Override
-                public void onElementResize(ElementResizeEvent e) {
-                    getWidget().triggerResize();
+    private static void load(Runnable onLoad, ArrayList<LoadApi.LoadLibrary> loadLibraries, LoadApi.Language language, String otherParams) {
+        String op = "";
+        if(otherParams != null) {
+            op = op + "&" + otherParams;
+        }
+
+        if(loadLibraries != null) {
+            op = op + "&" + getLibraries(loadLibraries);
+        }
+
+        if(language != null) {
+            op = op + "&language=" + language.getValue();
+        }
+
+        AjaxLoader.AjaxLoaderOptions settings = AjaxLoader.AjaxLoaderOptions.newInstance();
+        settings.setOtherParms(op);
+        AjaxLoader.loadApi("maps", "3.25", onLoad, settings);
+    }
+
+    private static String getLibraries(ArrayList<LoadApi.LoadLibrary> loadLibraries) {
+        if(loadLibraries == null) {
+            return "";
+        } else {
+            String s = "libraries=";
+            Iterator itr = loadLibraries.iterator();
+            int i = 0;
+
+            while(itr.hasNext()) {
+                LoadApi.LoadLibrary ll = (LoadApi.LoadLibrary)itr.next();
+                if(ll != null) {
+                    if(i > 0) {
+                        s = s + ",";
+                    }
+
+                    s = s + ll.value();
+                    ++i;
                 }
-            });
-        MapWidget map = getWidget().getMap();
-        updateFromState(true);
-        for (GoogleMapInitListener listener : initListeners) {
-            listener.mapWidgetInitiated(map);
+            }
+
+            return s;
         }
     }
 
