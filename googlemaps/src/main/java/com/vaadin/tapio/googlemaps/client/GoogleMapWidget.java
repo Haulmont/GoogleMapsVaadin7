@@ -36,6 +36,8 @@ import com.google.gwt.maps.client.events.radius.RadiusChangeMapEvent;
 import com.google.gwt.maps.client.events.radius.RadiusChangeMapHandler;
 import com.google.gwt.maps.client.events.removeat.RemoveAtMapEvent;
 import com.google.gwt.maps.client.events.removeat.RemoveAtMapHandler;
+import com.google.gwt.maps.client.events.rightclick.RightClickMapEvent;
+import com.google.gwt.maps.client.events.rightclick.RightClickMapHandler;
 import com.google.gwt.maps.client.events.setat.SetAtMapEvent;
 import com.google.gwt.maps.client.events.setat.SetAtMapHandler;
 import com.google.gwt.maps.client.events.tiles.TilesLoadedMapEvent;
@@ -50,6 +52,7 @@ import com.google.gwt.maps.client.services.DirectionsService;
 import com.google.gwt.maps.client.services.DirectionsStatus;
 import com.google.gwt.maps.client.visualizationlib.HeatMapLayer;
 import com.google.gwt.maps.client.visualizationlib.HeatMapLayerOptions;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -67,6 +70,10 @@ import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickLi
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.CircleRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MapRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MarkerRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.PolygonRightClickListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
@@ -95,16 +102,22 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private MarkerClickListener markerClickListener = null;
     private MarkerDoubleClickListener markerDoubleClickListener = null;
     private MarkerDragListener markerDragListener = null;
+    private MarkerRightClickListener markerRightClickListener = null;
+
     private InfoWindowClosedListener infoWindowClosedListener = null;
+    private DirectionsResultHandler directionsResultHandler = null;
+
     private PolygonCompleteListener polygonCompleteListener = null;
     private PolygonClickListener polygonClickListener = null;
-    private CircleCompleteListener circleCompleteListener = null;
-    private CircleClickListener circleClickListener = null;
-    private CircleCenterChangeListener circleCenterChangeListener = null;
-    private CircleDoubleClickListener circleDoubleClickListener = null;
-    private CircleRadiusChangeListener circleRadiusChangeListener = null;
     private PolygonEditListener polygonEditListener = null;
-    private DirectionsResultHandler directionsResultHandler = null;
+    private PolygonRightClickListener polygonRightClickListener = null;
+
+    private CircleClickListener circleClickListener = null;
+    private CircleDoubleClickListener circleDoubleClickListener = null;
+    private CircleRightClickListener circleRightClickListener = null;
+    private CircleCompleteListener circleCompleteListener = null;
+    private CircleCenterChangeListener circleCenterChangeListener = null;
+    private CircleRadiusChangeListener circleRadiusChangeListener = null;
 
     private DirectionsService directionsService;
 
@@ -114,6 +127,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private LatLngBounds allowedBoundsVisibleArea = null;
 
     private MapClickListener mapClickListener = null;
+    private MapRightClickListener mapRightClickListener = null;
 
     private LatLng center = null;
     private int zoom = 0;
@@ -181,6 +195,16 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     LatLon position = new LatLon(latLng.getLatitude(),
                             latLng.getLongitude());
                     mapClickListener.mapClicked(position);
+                }
+            }
+        });
+        mapImpl.addRightClickHandler(new RightClickMapHandler() {
+            @Override
+            public void onEvent(RightClickMapEvent rightClickMapEvent) {
+                if (mapRightClickListener != null) {
+                    LatLng latLng = rightClickMapEvent.getMouseEvent().getLatLng();
+                    LatLon position = new LatLon(latLng.getLatitude(), latLng.getLongitude());
+                    mapRightClickListener.mapRightClicked(position);
                 }
             }
         });
@@ -387,6 +411,25 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                         }
                     }
                 });
+                marker.addRightClickHandler(new RightClickMapHandler() {
+                    @Override
+                    public void onEvent(RightClickMapEvent rightClickMapEvent) {
+                        Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                            @Override
+                            public void execute() {
+                                Timer timer = new Timer() {
+                                    @Override
+                                    public void run() {
+                                        if (!markerDoubleClicked && markerRightClickListener != null) {
+                                            markerRightClickListener.markerRightClicked(markerMap.get(marker));
+                                        }
+                                    }
+                                };
+                                timer.schedule(500);
+                            }
+                        });
+                    }
+                });
             } else {
                 updateMarker(googleMapMarker);
             }
@@ -432,6 +475,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         markerClickListener = listener;
     }
 
+    public void setMarkerRightClickListener(MarkerRightClickListener markerRightClickListener) {
+        this.markerRightClickListener = markerRightClickListener;
+    }
+
     public void setMarkerDoubleClickListener(MarkerDoubleClickListener listener) {
         markerDoubleClickListener = listener;
     }
@@ -442,6 +489,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setMapClickListener(MapClickListener listener) {
         mapClickListener = listener;
+    }
+
+    protected void setMapRightClickListener(MapRightClickListener mapRightClickListener) {
+        this.mapRightClickListener = mapRightClickListener;
     }
 
     public void setMarkerDragListener(MarkerDragListener listener) {
@@ -464,6 +515,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         polygonClickListener = listener;
     }
 
+    protected void setPolygonRightClickListener(PolygonRightClickListener polygonRightClickListener) {
+        this.polygonRightClickListener = polygonRightClickListener;
+    }
+
     public void setDirectionsResultHandler(DirectionsResultHandler handler) {
         directionsResultHandler = handler;
     }
@@ -474,6 +529,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setCircleClickListener(CircleClickListener circleClickListener) {
         this.circleClickListener = circleClickListener;
+    }
+
+    protected void setCircleRightClickListener(CircleRightClickListener circleRightClickListener) {
+        this.circleRightClickListener = circleRightClickListener;
     }
 
     public void setCircleCenterChangeListener(CircleCenterChangeListener circleCenterChangeListener) {
@@ -583,7 +642,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setPolygonOverlays(Map<Long, GoogleMapPolygon> polyOverlays) {
         for (Polygon polygon : polygonMap.keySet()) {
-            polygon.setMap((MapWidget) null);
+            polygon.setMap(null);
         }
         polygonMap.clear();
 
@@ -616,7 +675,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setCircleOverlays(Map<Long, GoogleMapCircle> circleOverlays) {
         for (Circle circle : circleMap.keySet()) {
-            circle.setMap((MapWidget) null);
+            circle.setMap(null);
         }
         circleMap.clear();
 
@@ -696,11 +755,24 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 }
             }
         });
+        circle.addRightClickHandler(new RightClickMapHandler() {
+            @Override
+            public void onEvent(RightClickMapEvent rightClickMapEvent) {
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        if (circleRightClickListener != null) {
+                            circleRightClickListener.circleRightClicked(circleMap.get(circle));
+                        }
+                    }
+                });
+            }
+        });
     }
 
     public void setPolylineOverlays(Set<GoogleMapPolyline> polylineOverlays) {
         for (Polyline polyline : polylineMap.keySet()) {
-            polyline.setMap((MapWidget) null);
+            polyline.setMap(null);
         }
         polylineMap.clear();
 
@@ -728,7 +800,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setKmlLayers(Collection<GoogleMapKmlLayer> layers) {
         for (KmlLayer kmlLayer : kmlLayerMap.keySet()) {
-            kmlLayer.setMap((MapWidget) null);
+            kmlLayer.setMap(null);
         }
         kmlLayerMap.clear();
 
@@ -761,7 +833,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             heatMapLayer.setMap(null);
         }
         heatMapLayerMap.clear();
-        
+
         for (GoogleMapHeatMapLayer heatMapLayer : layers) {
             HeatMapLayerOptions options = HeatMapLayerOptions.newInstance();
 
@@ -915,23 +987,22 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             InfoWindowOptions options = InfoWindowOptions.newInstance();
             String contents = gmWindow.getContent();
 
-            // wrap the contents inside a div if there's a defined width or
-            // height
+            // wrap the contents inside a div if there's a defined width or height
             if (gmWindow.getHeight() != null || gmWindow.getWidth() != null) {
-                StringBuffer contentWrapper = new StringBuffer("<div style=\"");
+                StringBuilder contentWrapper = new StringBuilder("<div style=\"");
                 if (gmWindow.getWidth() != null) {
-                    contentWrapper.append("width:");
-                    contentWrapper.append(gmWindow.getWidth());
-                    contentWrapper.append(";");
+                    contentWrapper.append("width:")
+                            .append(gmWindow.getWidth())
+                            .append(";");
                 }
                 if (gmWindow.getHeight() != null) {
-                    contentWrapper.append("height:");
-                    contentWrapper.append(gmWindow.getHeight());
-                    contentWrapper.append(";");
+                    contentWrapper.append("height:")
+                            .append(gmWindow.getHeight())
+                            .append(";");
                 }
-                contentWrapper.append("\" >");
-                contentWrapper.append(contents);
-                contentWrapper.append("</div>");
+                contentWrapper.append("\" >")
+                        .append(contents)
+                        .append("</div>");
                 contents = contentWrapper.toString();
             }
 
@@ -1056,7 +1127,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     }
 
     private void attachPolygonEditListeners(final Polygon polygon,
-            final GoogleMapPolygon vPolygon) {
+                                            final GoogleMapPolygon vPolygon) {
         polygon.addClickHandler(new ClickMapHandler() {
             @Override
             public void onEvent(ClickMapEvent event) {
@@ -1064,6 +1135,19 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     @Override
                     public void execute() {
                         polygonClickListener.polygonClicked(vPolygon);
+                    }
+                });
+            }
+        });
+        polygon.addRightClickHandler(new RightClickMapHandler() {
+            @Override
+            public void onEvent(RightClickMapEvent rightClickMapEvent) {
+                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                    @Override
+                    public void execute() {
+                        if (polygonRightClickListener != null) {
+                            polygonRightClickListener.polygonRightClicked(vPolygon);
+                        }
                     }
                 });
             }

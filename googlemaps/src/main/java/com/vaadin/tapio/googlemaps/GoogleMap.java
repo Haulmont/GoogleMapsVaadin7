@@ -15,6 +15,10 @@ import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickLi
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.CircleRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MapRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MarkerRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.PolygonRightClickListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
@@ -30,6 +34,10 @@ import com.vaadin.tapio.googlemaps.client.rpcs.doubleclick.MarkerDoubleClickedRp
 import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.CircleCompleteRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.overlaycomplete.PolygonCompleteRpc;
 import com.vaadin.tapio.googlemaps.client.rpcs.radiuschange.CircleRadiusChangeRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.rightclick.CircleRightClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.rightclick.MapRightClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.rightclick.MarkerRightClickedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.rightclick.PolygonRightClickedRpc;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResult;
 import com.vaadin.tapio.googlemaps.client.services.DirectionsResultCallback;
@@ -55,13 +63,16 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     private Map<Long, DirectionsResultCallback> directionsCallbacks = new HashMap<Long, DirectionsResultCallback>();
 
+    protected GoogleMapMarker getMarker(long markerId) {
+        return getState(false).markers.get(markerId);
+    }
+
     private MarkerClickedRpc markerClickedRpc = new MarkerClickedRpc() {
         private static final long serialVersionUID = -1895207589346639292L;
 
         @Override
         public void markerClicked(long markerId) {
-
-            GoogleMapMarker marker = getState().markers.get(markerId);
+            GoogleMapMarker marker = getMarker(markerId);
             for (MarkerClickListener listener : markerClickListeners) {
                 listener.markerClicked(marker);
             }
@@ -73,10 +84,19 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void markerClicked(long markerId) {
-
-            GoogleMapMarker marker = getState().markers.get(markerId);
+            GoogleMapMarker marker = getMarker(markerId);
             for (MarkerDoubleClickListener listener : markerDoubleClickListeners) {
                 listener.markerDoubleClicked(marker);
+            }
+        }
+    };
+
+    private MarkerRightClickedRpc markerRightClickedRpc = new MarkerRightClickedRpc() {
+        @Override
+        public void markerRightClicked(long markerId) {
+            GoogleMapMarker marker = getMarker(markerId);
+            for (MarkerRightClickListener listener : markerRightClickListeners) {
+                listener.markerRightClicked(marker);
             }
         }
     };
@@ -86,7 +106,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void markerDragged(long markerId, LatLon newPosition) {
-            GoogleMapMarker marker = getState().markers.get(markerId);
+            GoogleMapMarker marker = getMarker(markerId);
             LatLon oldPosition = marker.getPosition();
             marker.setPosition(newPosition);
             for (MarkerDragListener listener : markerDragListeners) {
@@ -126,6 +146,15 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
+    private MapRightClickedRpc mapRightClickedRpc = new MapRightClickedRpc() {
+        @Override
+        public void mapRightClicked(LatLon position) {
+            for (MapRightClickListener listener : mapRightClickListeners) {
+                listener.mapRightClicked(position);
+            }
+        }
+    };
+
     private MapInitRpc mapInitRpc = new MapInitRpc() {
 
         private static final long serialVersionUID = 9112208038019675738L;
@@ -146,13 +175,17 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void infoWindowClosed(long windowId) {
-            GoogleMapInfoWindow window = getState().infoWindows.get(windowId);
+            GoogleMapInfoWindow window = getState(false).infoWindows.get(windowId);
             for (InfoWindowClosedListener listener : infoWindowClosedListeners) {
                 listener.infoWindowClosed(window);
             }
             getState().infoWindows.remove(windowId);
         }
     };
+
+    protected GoogleMapPolygon getPolygon(long polygonId) {
+        return getState(false).polygons.get(polygonId);
+    }
 
     private PolygonCompleteRpc polygonCompleteRpc = new PolygonCompleteRpc() {
         private static final long serialVersionUID = 8989540297240790126L;
@@ -169,21 +202,6 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
-    private CircleCompleteRpc circleCompleteRpc = new CircleCompleteRpc() {
-        private static final long serialVersionUID = 8989540297240790126L;
-
-        @Override
-        public void circleComplete(GoogleMapCircle circle) {
-            if (circle == null) {
-                return;
-            }
-            getState().circles.put(circle.getId(), circle);
-            for (CircleCompleteListener listener : circleCompleteListeners) {
-                listener.circleComplete(circle);
-            }
-        }
-    };
-
     private PolygonEditRpc polygonEditRpc = new PolygonEditRpc() {
         private static final long serialVersionUID = -8138362526979836605L;
 
@@ -192,7 +210,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
             if (actionType == null || latLon == null) {
                 return;
             }
-            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
+            GoogleMapPolygon polygon = getPolygon(polygonId);
             if (polygon == null) {
                 return;
             }
@@ -217,6 +235,28 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
+    private PolygonClickedRpc polygonClickedRpc = new PolygonClickedRpc() {
+        private static final long serialVersionUID = -8630070910806102818L;
+
+        @Override
+        public void polygonClicked(long polygonId) {
+            GoogleMapPolygon polygon = getPolygon(polygonId);
+            for (PolygonClickListener listener : polygonClickListeners) {
+                listener.polygonClicked(polygon);
+            }
+        }
+    };
+
+    private PolygonRightClickedRpc polygonRightClickedRpc = new PolygonRightClickedRpc() {
+        @Override
+        public void polygonRightClicked(long polygonId) {
+            GoogleMapPolygon polygon = getPolygon(polygonId);
+            for (PolygonRightClickListener listener : polygonRightClickListeners) {
+                listener.polygonRightClicked(polygon);
+            }
+        }
+    };
+
     private HandleDirectionsResultRpc handleDirectionsResultRpc = new HandleDirectionsResultRpc() {
         private static final long serialVersionUID = 2075879581561166850L;
 
@@ -234,27 +274,34 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
+    protected GoogleMapCircle getCircle(long circleId) {
+        return getState(false).circles.get(circleId);
+    }
+
+    private CircleCompleteRpc circleCompleteRpc = new CircleCompleteRpc() {
+        private static final long serialVersionUID = 8989540297240790126L;
+
+        @Override
+        public void circleComplete(GoogleMapCircle circle) {
+            if (circle == null) {
+                return;
+            }
+            getState().circles.put(circle.getId(), circle);
+            for (CircleCompleteListener listener : circleCompleteListeners) {
+                listener.circleComplete(circle);
+            }
+        }
+    };
+
     private CircleClickedRpc circleClickedRpc = new CircleClickedRpc() {
 
         private static final long serialVersionUID = -147202438775817921L;
 
         @Override
         public void circleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = getCircle(circleId);
             for (CircleClickListener listener : circleClickListeners) {
                 listener.circleClicked(circle);
-            }
-        }
-    };
-
-    private PolygonClickedRpc polygonClickedRpc = new PolygonClickedRpc() {
-        private static final long serialVersionUID = -8630070910806102818L;
-
-        @Override
-        public void polygonClicked(long polygonId) {
-            GoogleMapPolygon polygon = ((GoogleMapState) getState(false)).polygons.get(polygonId);
-            for (PolygonClickListener listener : polygonClickListeners) {
-                listener.polygonClicked(polygon);
             }
         }
     };
@@ -265,9 +312,19 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void circleDoubleClicked(long circleId) {
-            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = getCircle(circleId);
             for (CircleDoubleClickListener listener : circleDoubleClickListeners) {
                 listener.circleDoubleClicked(circle);
+            }
+        }
+    };
+
+    private CircleRightClickedRpc circleRightClickedRpc = new CircleRightClickedRpc() {
+        @Override
+        public void circleRightClicked(long circleId) {
+            GoogleMapCircle circle = getCircle(circleId);
+            for (CircleRightClickListener listener : circleRightClickListeners) {
+                listener.circleRightClicked(circle);
             }
         }
     };
@@ -278,7 +335,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void centerChanged(long circleId, LatLon newCenter) {
-            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = getCircle(circleId);
             LatLon oldCenter = circle.getCenter();
             circle.setCenter(newCenter);
             for (CircleCenterChangeListener listener : circleCenterChangeListeners) {
@@ -293,7 +350,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         @Override
         public void radiusChanged(long circleId, double newRadius) {
-            GoogleMapCircle circle = ((GoogleMapState) getState(false)).circles.get(circleId);
+            GoogleMapCircle circle = getCircle(circleId);
             double oldRadius = circle.getRadius();
             circle.setRadius(newRadius);
             for (CircleRadiusChangeListener listener : circleRadiusChangeListeners) {
@@ -302,36 +359,29 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         }
     };
 
-
     private List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
-
+    private List<MarkerRightClickListener> markerRightClickListeners = new ArrayList<MarkerRightClickListener>();
     private List<MarkerDoubleClickListener> markerDoubleClickListeners = new ArrayList<MarkerDoubleClickListener>();
-
-    private List<MapMoveListener> mapMoveListeners = new ArrayList<MapMoveListener>();
-
-    private List<MapClickListener> mapClickListeners = new ArrayList<MapClickListener>();
-
     private List<MarkerDragListener> markerDragListeners = new ArrayList<MarkerDragListener>();
 
+    private List<MapMoveListener> mapMoveListeners = new ArrayList<MapMoveListener>();
+    private List<MapClickListener> mapClickListeners = new ArrayList<MapClickListener>();
+    private List<MapRightClickListener> mapRightClickListeners = new ArrayList<MapRightClickListener>();
+
     private List<InfoWindowClosedListener> infoWindowClosedListeners = new ArrayList<InfoWindowClosedListener>();
+    private MapInitListener initListener;
 
     private List<PolygonCompleteListener> polygonCompleteListeners = new ArrayList<PolygonCompleteListener>();
-
     private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
-
     private List<PolygonClickListener> polygonClickListeners = new ArrayList<PolygonClickListener>();
+    private List<PolygonRightClickListener> polygonRightClickListeners = new ArrayList<PolygonRightClickListener>();
 
     private List<CircleCompleteListener> circleCompleteListeners = new ArrayList<CircleCompleteListener>();
-
     private List<CircleCenterChangeListener> circleCenterChangeListeners = new ArrayList<CircleCenterChangeListener>();
-
     private List<CircleRadiusChangeListener> circleRadiusChangeListeners = new ArrayList<CircleRadiusChangeListener>();
-
     private List<CircleClickListener> circleClickListeners = new ArrayList<CircleClickListener>();
-
     private List<CircleDoubleClickListener> circleDoubleClickListeners = new ArrayList<CircleDoubleClickListener>();
-
-    private MapInitListener initListener;
+    private List<CircleRightClickListener> circleRightClickListeners = new ArrayList<CircleRightClickListener>();
 
     /**
      * Initiates a new GoogleMap object with default settings from the
@@ -360,17 +410,26 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
         registerRpc(markerClickedRpc);
         registerRpc(markerDoubleClickedRpc);
+        registerRpc(markerRightClickedRpc);
+        registerRpc(markerDraggedRpc);
+
         registerRpc(mapMovedRpc);
         registerRpc(mapClickedRpc);
-        registerRpc(markerDraggedRpc);
+        registerRpc(mapRightClickedRpc);
+        registerRpc(mapInitRpc);
+
         registerRpc(infoWindowClosedRpc);
+        registerRpc(handleDirectionsResultRpc);
+
+        registerRpc(polygonClickedRpc);
+        registerRpc(polygonRightClickedRpc);
         registerRpc(polygonCompleteRpc);
         registerRpc(polygonEditRpc);
-        registerRpc(polygonClickedRpc);
-        registerRpc(mapInitRpc);
-        registerRpc(handleDirectionsResultRpc);
+
         registerRpc(circleClickedRpc);
         registerRpc(circleDoubleClickRpc);
+        registerRpc(circleRightClickedRpc);
+
         registerRpc(circleCenterChangeRpc);
         registerRpc(circleCompleteRpc);
         registerRpc(circleRadiusChangeRpc);
@@ -440,6 +499,11 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         return (GoogleMapState) super.getState();
     }
 
+    @Override
+    protected GoogleMapState getState(boolean markAsDirty) {
+        return (GoogleMapState) super.getState(markAsDirty);
+    }
+
     /**
      * Sets the center of the map to the given coordinates.
      *
@@ -456,21 +520,21 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return Coordinates of the center.
      */
     public LatLon getCenter() {
-        return getState().center;
+        return getState(false).center;
     }
 
     /**
      * @return the current position of north-east bound of the map
      */
     public LatLon getBoundNE() {
-        return getState().boundNE;
+        return getState(false).boundNE;
     }
 
     /**
      * @return the current position of south-west bound of the map
      */
     public LatLon getBoundSW() {
-        return getState().boundSW;
+        return getState(false).boundSW;
     }
 
     /**
@@ -489,7 +553,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return Current value of the zoom.
      */
     public int getZoom() {
-        return getState().zoom;
+        return getState(false).zoom;
     }
 
     /**
@@ -541,7 +605,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if the marker has been added to the map.
      */
     public boolean hasMarker(GoogleMapMarker marker) {
-        return getState().markers.containsKey(marker.getId());
+        return getState(false).markers.containsKey(marker.getId());
     }
 
     /**
@@ -550,7 +614,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return Set of the markers.
      */
     public Collection<GoogleMapMarker> getMarkers() {
-        return getState().markers.values();
+        return getState(false).markers.values();
     }
 
     /**
@@ -569,6 +633,24 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      */
     public void removeMarkerClickListener(MarkerClickListener listener) {
         markerClickListeners.remove(listener);
+    }
+
+    /**
+     * Adds a MarkerRightClickListener to the map.
+     *
+     * @param listener the listener to add
+     */
+    public void addMarkerRightClickListener(MarkerRightClickListener listener) {
+        markerRightClickListeners.add(listener);
+    }
+
+    /**
+     * Removes a MarkerRightClickListener from the map.
+     *
+     * @param listener the listener to remove
+     */
+    public void removeMarkerRightClickListener(MarkerRightClickListener listener) {
+        markerRightClickListeners.remove(listener);
     }
 
     /**
@@ -614,6 +696,24 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         polygonClickListeners.remove(listener);
     }
 
+    /**
+     * Adds a PolygonRightClickListener to the map.
+     *
+     * @param listener the listener to add
+     */
+    public void addPolygonRightClickListener(PolygonRightClickListener listener) {
+        polygonRightClickListeners.add(listener);
+    }
+
+    /**
+     * Removes a PolygonRightClickListener from the map.
+     *
+     * @param listener the listener to remove.
+     */
+    public void removePolygonRightClickListener(PolygonRightClickListener listener) {
+        polygonRightClickListeners.remove(listener);
+    }
+
     public void addPolygonEditListener(PolygonEditListener listener) {
         polygonEditListeners.add(listener);
     }
@@ -636,6 +736,24 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     public void removeCircleClickListener(CircleClickListener listener) {
         circleClickListeners.remove(listener);
+    }
+
+    /**
+     * Adds a CircleRightClickListener to the map.
+     *
+     * @param listener the listener to add
+     */
+    public void addCircleRightClickListener(CircleRightClickListener listener) {
+        circleRightClickListeners.add(listener);
+    }
+
+    /**
+     * Removes a CircleRightClickListener from the map.
+     *
+     * @param listener the listener to remove
+     */
+    public void removeCircleRightClickListener(CircleRightClickListener listener) {
+        circleRightClickListeners.remove(listener);
     }
 
     public void addCircleDoubleClickListener(CircleDoubleClickListener listener) {
@@ -708,6 +826,24 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     }
 
     /**
+     * Adds a MapRightClickListener to the map.
+     *
+     * @param listener the listener to add
+     */
+    public void addMapRightClickListener(MapRightClickListener listener) {
+        mapRightClickListeners.add(listener);
+    }
+
+    /**
+     * Removes a MapRightClickListener from the map.
+     *
+     * @param listener the listener to remove
+     */
+    public void removeMapRightClickListener(MapRightClickListener listener) {
+        mapRightClickListeners.remove(listener);
+    }
+
+    /**
      * Adds an InfoWindowClosedListener to the map.
      *
      * @param listener The listener to add.
@@ -731,7 +867,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if enabled
      */
     public boolean isCenterBoundLimitsEnabled() {
-        return getState().limitCenterBounds;
+        return getState(false).limitCenterBounds;
     }
 
     /**
@@ -876,7 +1012,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return The current MapType.
      */
     public String getMapType() {
-        return getState().mapTypeId;
+        return getState(false).mapTypeId;
     }
 
     public void setMapType(String mapTypeId) {
@@ -889,7 +1025,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if the map draggable.
      */
     public boolean isDraggable() {
-        return getState().draggable;
+        return getState(false).draggable;
     }
 
     /**
@@ -907,7 +1043,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if the shortcuts are enabled.
      */
     public boolean areKeyboardShortcutsEnabled() {
-        return getState().keyboardShortcutsEnabled;
+        return getState(false).keyboardShortcutsEnabled;
     }
 
     /**
@@ -925,7 +1061,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if the scroll wheel is enabled
      */
     public boolean isScrollWheelEnabled() {
-        return getState().scrollWheelEnabled;
+        return getState(false).scrollWheelEnabled;
     }
 
     /**
@@ -943,7 +1079,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return Currently enabled map controls.
      */
     public Set<GoogleMapControl> getControls() {
-        return getState().controls;
+        return getState(false).controls;
     }
 
     /**
@@ -995,7 +1131,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true if enabled
      */
     public boolean isVisibleAreaBoundLimitsEnabled() {
-        return getState().limitVisibleAreaBounds;
+        return getState(false).limitVisibleAreaBounds;
     }
 
     /**
@@ -1027,7 +1163,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return maximum amount of zoom
      */
     public int getMaxZoom() {
-        return getState().maxZoom;
+        return getState(false).maxZoom;
     }
 
     /**
@@ -1045,7 +1181,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return minimum amount of zoom
      */
     public int getMinZoom() {
-        return getState().minZoom;
+        return getState(false).minZoom;
     }
 
     /**
@@ -1092,7 +1228,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
      * @return true, if visual refresh is enabled
      */
     public boolean isVisualRefreshEnabled() {
-        return getState().visualRefreshEnabled;
+        return getState(false).visualRefreshEnabled;
     }
 
     /**
@@ -1116,7 +1252,7 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
     }
 
     public DrawingOptions getDrawingOptions() {
-        return getState().drawingOptions;
+        return getState(false).drawingOptions;
     }
 
     public void route(DirectionsRequest request, DirectionsResultCallback handler) {
