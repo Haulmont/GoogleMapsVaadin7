@@ -22,6 +22,10 @@ import com.vaadin.tapio.googlemaps.client.events.doubleclick.MarkerDoubleClickLi
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.CircleCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.overlaycomplete.PolygonCompleteListener;
 import com.vaadin.tapio.googlemaps.client.events.radiuschange.CircleRadiusChangeListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.CircleRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MapRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.MarkerRightClickListener;
+import com.vaadin.tapio.googlemaps.client.events.rightclick.PolygonRightClickListener;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
@@ -144,8 +148,7 @@ public class DemoUI extends UI {
                     @Override
                     public void buttonClick(ClickEvent event) {
                         List<LatLon> data = Arrays.asList(new LatLon(60.493086028202555, 22.081146240234375),
-                                new
-                                        LatLon(60.4944387701424, 22.137451171875),
+                                new LatLon(60.4944387701424, 22.137451171875),
                                 new LatLon(60.50691090821668, 22.163543701171875), new LatLon(60.50661090821668, 22.163543701171875),
                                 new LatLon(60.50721090821668, 22.163543701171875), new LatLon(60.50631090821668, 22.163543701171875),
                                 new LatLon(60.50751090821668, 22.163543701171875), new LatLon(60.50551090821668, 22.163543701171875),
@@ -527,12 +530,28 @@ public class DemoUI extends UI {
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
+        googleMap.addPolygonRightClickListener(new PolygonRightClickListener() {
+            @Override
+            public void polygonRightClicked(GoogleMapPolygon googleMapPolygon) {
+                Label consoleEntry = new Label("Polygon "
+                        + googleMapPolygon.getId() + " right clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
 
         googleMap.addCircleClickListener(new CircleClickListener() {
             @Override
             public void circleClicked(GoogleMapCircle circle) {
                 Label consoleEntry = new Label("Cirlce "
                         + circle.getId() + " clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
+        googleMap.addCircleRightClickListener(new CircleRightClickListener() {
+            @Override
+            public void circleRightClicked(GoogleMapCircle googleMapCircle) {
+                Label consoleEntry = new Label("Cirlce "
+                        + googleMapCircle.getId() + " right clicked.");
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
@@ -553,6 +572,16 @@ public class DemoUI extends UI {
                         + clickedMarker.getCaption() + "\" at ("
                         + clickedMarker.getPosition().getLat() + ", "
                         + clickedMarker.getPosition().getLon() + ") double clicked.");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
+        googleMap.addMarkerRightClickListener(new MarkerRightClickListener() {
+            @Override
+            public void markerRightClicked(GoogleMapMarker googleMapMarker) {
+                Label consoleEntry = new Label("Marker \""
+                        + googleMapMarker.getCaption() + "\" at ("
+                        + googleMapMarker.getPosition().getLat() + ", "
+                        + googleMapMarker.getPosition().getLon() + ") right clicked.");
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
@@ -579,6 +608,14 @@ public class DemoUI extends UI {
             public void mapClicked(LatLon position) {
                 Label consoleEntry = new Label("Map click to ("
                         + position.getLat() + ", " + position.getLon() + ")");
+                consoleLayout.addComponent(consoleEntry, 0);
+            }
+        });
+        googleMap.addMapRightClickListener(new MapRightClickListener() {
+            @Override
+            public void mapRightClicked(LatLon latLon) {
+                Label consoleEntry = new Label("Map right click to ("
+                        + latLon.getLat() + ", " + latLon.getLon() + ")");
                 consoleLayout.addComponent(consoleEntry, 0);
             }
         });
