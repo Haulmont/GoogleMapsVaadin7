@@ -1,5 +1,6 @@
 package com.vaadin.tapio.googlemaps.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -87,6 +88,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     public static final String CLASSNAME = "googlemap";
 
     private MapWidget map;
+    private MapImpl mapImpl;
     private MapOptions mapOptions;
     private Map<Marker, GoogleMapMarker> markerMap = new HashMap<Marker, GoogleMapMarker>();
     private Map<GoogleMapMarker, Marker> gmMarkerMap = new HashMap<GoogleMapMarker, Marker>();
@@ -96,6 +98,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private Map<InfoWindow, GoogleMapInfoWindow> infoWindowMap = new HashMap<InfoWindow, GoogleMapInfoWindow>();
     private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
     private Map<HeatMapLayer, GoogleMapHeatMapLayer> heatMapLayerMap = new HashMap<HeatMapLayer, GoogleMapHeatMapLayer>();
+    private Map<GoogleMapLabel, JavaScriptObject> labelsMap = new HashMap<GoogleMapLabel, JavaScriptObject>();
     private Map<ImageMapType, GoogleImageMapType> imageMapTypes = new LinkedHashMap<ImageMapType, GoogleImageMapType>();
     private Map<ImageMapType, GoogleImageMapType> overlayImageMapTypes = new LinkedHashMap<ImageMapType, GoogleImageMapType>();
 
@@ -147,7 +150,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         mapOptions.setMapTypeId(MapTypeId.fromValue(mapTypeId.toLowerCase()));
         mapOptions.setCenter(this.center);
         mapOptions.setZoom(this.zoom);
-        final MapImpl mapImpl = MapImpl.newInstance(getElement(), mapOptions);
+        mapImpl = MapImpl.newInstance(getElement(), mapOptions);
         mapImpl.addTilesLoadedHandler(new TilesLoadedMapHandler() {
             @Override
             public void onEvent(TilesLoadedMapEvent event) {
@@ -208,6 +211,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 }
             }
         });
+
+        initLabelOverlay();
     }
 
     private LatLon getCenter(MapImpl mapImpl) {
@@ -709,10 +714,12 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             @Override
             public void onEvent(CenterChangeMapEvent event) {
                 GoogleMapCircle vCircle = circleMap.get(circle);
-                LatLon oldCenter = vCircle.getCenter();
                 vCircle.setCenter(GoogleMapAdapterUtils.fromLatLng(circle.getCenter()));
-                if (circleCenterChangeListener != null && !Objects.equals(oldCenter, circle.getCenter())) {
-                    circleCenterChangeListener.centerChanged(vCircle, oldCenter);
+
+                LatLon vOldCenter = vCircle.getCenter();
+                LatLng gwtOldCenter = LatLng.newInstance(vOldCenter.getLat(), vOldCenter.getLon());
+                if (circleCenterChangeListener != null && !Objects.equals(gwtOldCenter, circle.getCenter())) {
+                    circleCenterChangeListener.centerChanged(vCircle, vOldCenter);
                 }
             }
         });
@@ -1205,6 +1212,114 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         }
         mapTypeControlOptions.setMapTypeIds(mapTypeIds.toArray(new String[mapTypeIds.size()]));
         mapOptions.setMapTypeControlOptions(mapTypeControlOptions);
+    }
+
+    public void setLabels(Collection<GoogleMapLabel> labels) {
+        removeAllLabels();
+
+        for (GoogleMapLabel label : labels) {
+            GoogleMapLabelOptions labelOptions = createLabelOptions(label);
+
+            JavaScriptObject jsLabel = addLabel(labelOptions);
+
+            labelsMap.put(label, jsLabel);
+        }
+    }
+
+    protected GoogleMapLabelOptions createLabelOptions(GoogleMapLabel label) {
+        GoogleMapLabelOptions options = GoogleMapLabelOptions.newInstance();
+
+        options.setValue(label.getValue());
+
+        LatLon position = label.getPosition();
+        options.setPosition(LatLng.newInstance(position.getLat(), position.getLon()));
+        options.setContentType(label.getContentType());
+
+        options.setAdjustment(label.getAdjustment());
+        options.setStyleName(label.getStyleName());
+
+        return options;
+    }
+
+    protected void removeAllLabels() {
+        for (JavaScriptObject jsLabel : labelsMap.values()) {
+            removeLabel(jsLabel);
+        }
+        labelsMap.clear();
+    }
+
+    protected native void removeLabel(Object jsLabel) /*-{
+        jsLabel.setMap(null);
+    }-*/;
+
+    protected native void initLabelOverlay() /*-{
+        if ($wnd.LabelOverlay) {
+            return;
+        }
+
+        $wnd.LabelOverlay = function(labelOptions, map) {
+            this.value = labelOptions.value;
+            this.contentType = labelOptions.contentType;
+
+            this.position = labelOptions.position;
+            this.adjustment = labelOptions.adjustment;
+            this.styleName = labelOptions.styleName;
+
+            this.div = null;
+            this.innerDiv = null;
+
+            this.setMap(map);
+        };
+        $wnd.LabelOverlay.prototype = new $wnd.google.maps.OverlayView();
+
+        $wnd.LabelOverlay.prototype.onAdd = function() {
+            var div = document.createElement('div');
+
+            var primaryStylename = @com.vaadin.tapio.googlemaps.client.overlays.GoogleMapLabel::getPrimaryStylename()();
+            div.className = primaryStylename;
+            div.style.position = 'absolute';
+            this.div = div;
+
+            var innerDiv = document.createElement('div');
+            innerDiv.className = this.styleName;
+            innerDiv.style.position = 'relative';
+            this.innerDiv = innerDiv;
+
+            div.appendChild(innerDiv);
+
+            if (this.contentType == 'PLAIN_TEXT') {
+                innerDiv.appendChild(document.createTextNode(this.value));
+            } else {
+                innerDiv.innerHTML = this.value;
+            }
+
+            var adjustmentClassName = this.adjustment.toLowerCase().replace('_', '-');
+            innerDiv.className += ' ' + adjustmentClassName;
+
+            var panes = this.getPanes();
+            panes.overlayLayer.appendChild(div);
+        }
+
+        $wnd.LabelOverlay.prototype.onRemove = function() {
+            this.div.parentNode.removeChild(this.div);
+        };
+
+        $wnd.LabelOverlay.prototype.draw = function() {
+            var overlayProjection = this.getProjection();
+            var pos = overlayProjection.fromLatLngToDivPixel(this.position);
+
+            this.div.style.left = pos.x + 'px';
+            this.div.style.top = pos.y + 'px';
+        };
+    }-*/;
+
+    protected native JavaScriptObject addLabel(GoogleMapLabelOptions labelOptions)/*-{
+        var map = this.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getMapImpl()();
+        return new $wnd.LabelOverlay(labelOptions, map);
+    }-*/;
+
+    protected MapImpl getMapImpl() {
+        return mapImpl;
     }
 
     private class PolygonCompleteMapHandler implements

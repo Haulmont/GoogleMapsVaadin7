@@ -76,5 +76,7 @@ public class GoogleMapState extends AbstractComponentState {
 
     public Map<Long, GoogleMapCircle> circles = new HashMap<Long, GoogleMapCircle>();
 
+    public Map<Long, GoogleMapLabel> labels = new HashMap<Long, GoogleMapLabel>();
+
     public String apiUrl = null;
 }

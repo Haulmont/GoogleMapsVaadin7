@@ -220,6 +220,10 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             widget.setCircleOverlays(getState().circles);
         }
 
+        if (stateChangeEvent.hasPropertyChanged("labels") || initial) {
+            widget.setLabels(getState().labels.values());
+        }
+
         if (stateChangeEvent.hasPropertyChanged("kmlLayers") || initial) {
             widget.setKmlLayers(getState().kmlLayers);
         }
@@ -384,6 +388,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         GoogleMapWidget googleMap = getWidget();
 
         googleMap.setMarkers(getState().markers.values());
+        googleMap.setLabels(getState().labels.values());
         googleMap.setPolygonOverlays(getState().polygons);
         googleMap.setPolylineOverlays(getState().polylines);
         googleMap.setCircleOverlays(getState().circles);
