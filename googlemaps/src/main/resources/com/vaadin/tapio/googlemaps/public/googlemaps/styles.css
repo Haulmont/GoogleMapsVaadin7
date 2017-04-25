@@ -8,32 +8,40 @@
 
 .gm-label .top-left {
     transform: translate(-100%, -100%);
+    -ms-transform: translate(-100%, -100%);
 }
 
 .gm-label .top-center {
     transform: translate(-50%, -100%);
+    -ms-transform: translate(-50%, -100%);
 }
 
 .gm-label .top-right {
     transform: translateY(-100%);
+    -ms-transform: translateY(-100%);
 }
 
 .gm-label .middle-left {
     transform: translate(-100%, -50%);
+    -ms-transform: translate(-100%, -50%);
 }
 
 .gm-label .middle-center {
     transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
 }
 
 .gm-label .middle-right {
     transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
 }
 
 .gm-label .bottom-left {
     transform: translateX(-100%);
+    -ms-transform: translateX(-100%);
 }
 
 .gm-label .bottom-center {
     transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
 }
