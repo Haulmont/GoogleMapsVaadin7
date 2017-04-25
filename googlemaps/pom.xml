@@ -5,7 +5,7 @@
 	<groupId>com.haulmont.thirdparty</groupId>
 	<artifactId>googlemaps</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.2.CUBA.12</version>
+	<version>1.0.2.CUBA.13</version>
 	<name>GoogleMaps Add-on</name>
 	<organization>
 		<name>Vaadin/Tapio Aali</name>
