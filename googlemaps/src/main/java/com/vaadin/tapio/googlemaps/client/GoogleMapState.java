@@ -72,6 +72,8 @@ public class GoogleMapState extends AbstractComponentContainerState {
 
     public Map<Long, GoogleMapCircle> circles = new HashMap<Long, GoogleMapCircle>();
 
+    public Map<Long, GoogleMapLabel> labels = new HashMap<Long, GoogleMapLabel>();
+
     public String apiUrl = null;
 
     public Map<Long, String> infoWindowContentIdentifiers = new HashMap<>();

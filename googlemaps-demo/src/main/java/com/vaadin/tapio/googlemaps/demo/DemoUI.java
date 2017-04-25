@@ -30,6 +30,8 @@ import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
 import com.vaadin.tapio.googlemaps.client.overlays.*;
+import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapLabel.Adjustment;
+import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapLabel.ContentType;
 import com.vaadin.tapio.googlemaps.client.services.*;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
 import com.vaadin.ui.*;
@@ -56,6 +58,8 @@ public class DemoUI extends UI {
     private GoogleMapInfoWindow maariaWindow = new GoogleMapInfoWindow(
             "Maaria is a district of Turku", maariaMarker);
     private Button componentToMaariaInfoWindowButton;
+    private GoogleMapLabel label;
+
     private final String apiKey = "";
 
     @WebServlet(value = "/*", asyncSupported = true)
@@ -77,6 +81,7 @@ public class DemoUI extends UI {
     private Component getMainTabContent() {
         VerticalLayout content = new VerticalLayout();
         content.setSizeFull();
+        content.setSpacing(true);
         final GoogleMap googleMap = createGoogleMap();
 
         googleMap.setSizeFull();
@@ -124,9 +129,9 @@ public class DemoUI extends UI {
 
     private void createButtonsRow3(VerticalLayout content, final GoogleMap googleMap, final CssLayout consoleLayout) {
         HorizontalLayout buttonLayoutRow3 = new HorizontalLayout();
+        buttonLayoutRow3.setSpacing(true);
         buttonLayoutRow3.setHeight("26px");
         content.addComponent(buttonLayoutRow3);
-
 
         Button addKmlLayerButton = new Button("Add KML layer",
                 new Button.ClickListener() {
@@ -297,6 +302,7 @@ public class DemoUI extends UI {
 
     private void createButtonsRow2(VerticalLayout content, final GoogleMap googleMap, final CssLayout consoleLayout) {
         HorizontalLayout buttonLayoutRow2 = new HorizontalLayout();
+        buttonLayoutRow2.setSpacing(true);
         buttonLayoutRow2.setHeight("26px");
         content.addComponent(buttonLayoutRow2);
 
@@ -423,10 +429,33 @@ public class DemoUI extends UI {
                 });
         buttonLayoutRow2.addComponent(trafficLayerButton);
 
+        Button addLabelButton = new Button("Add Label", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                LatLon labelPos = new LatLon(60.484715, 21.923706);
+                String labelText = String.format("<strong>Label at (%f, %f)</strong>", labelPos.getLat(), labelPos.getLon());
+
+                label = new GoogleMapLabel(labelText, labelPos, ContentType.HTML);
+                label.setAdjustment(Adjustment.TOP_CENTER);
+                label.setStyleName("custom-stylename");
+
+                googleMap.addLabel(label);
+            }
+        });
+        buttonLayoutRow2.addComponent(addLabelButton);
+
+        Button removeLabelButton = new Button("Remove label", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                googleMap.removeLabel(label);
+            }
+        });
+        buttonLayoutRow2.addComponent(removeLabelButton);
     }
 
     private void createButtonsRow1(VerticalLayout content, final GoogleMap googleMap) {
         HorizontalLayout buttonLayoutRow1 = new HorizontalLayout();
+        buttonLayoutRow1.setSpacing(true);
         buttonLayoutRow1.setHeight("26px");
         content.addComponent(buttonLayoutRow1);
 
@@ -767,9 +796,10 @@ public class DemoUI extends UI {
                 options.setInitialDrawingMode((OverlayType) initialDrawingMode.getValue());
                 options.setEnableDrawingControl(enableDrawingControls.getValue());
 
+                //noinspection unchecked
                 DrawingControlOptions controlOptions = new DrawingControlOptions(
-                        (ControlPosition)controlsPosition.getValue(),
-                        new ArrayList<OverlayType>((Collection)drawingModeControls.getValue()));
+                        (ControlPosition) controlsPosition.getValue(),
+                        new ArrayList<OverlayType>((Collection) drawingModeControls.getValue()));
                 options.setDrawingControlOptions(controlOptions);
 
                 PolygonOptions polygonOptions = new PolygonOptions();
@@ -810,8 +840,6 @@ public class DemoUI extends UI {
         drawingOptionsContent.addComponent(polygonOptionsLayout);
         drawingOptionsContent.addComponent(circleOptionsLayout);
         drawingOptions.setWidth("300px");
-//        googleMap.setHeight("600px");
-//        googleMap.setWidth("100%");
         mapAndOptionsLayout.addComponent(googleMap);
         mapAndOptionsLayout.setExpandRatio(googleMap, 1.0f);
         drawingPanel.setContent(drawingOptions);
@@ -867,6 +895,5 @@ public class DemoUI extends UI {
             }
         });
         return content;
-
     }
 }

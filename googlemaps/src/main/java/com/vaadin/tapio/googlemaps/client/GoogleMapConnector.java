@@ -108,7 +108,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     public GoogleMapConnector() {
     }
 
-    protected void initMap() {
+    private void initMap() {
         final GoogleMapWidget googleMap = getWidget();
 
         googleMap.initMap(getState().center, getState().zoom, getState().mapTypeId, this);
@@ -257,6 +257,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         googleMap.setZoom(getState().zoom);
         googleMap.setTrafficLayerVisible(getState().trafficLayerVisible);
         googleMap.setMarkers(getState().markers.values());
+        googleMap.setLabels(getState().labels.values());
         googleMap.setPolygonOverlays(getState().polygons);
         googleMap.setPolylineOverlays(getState().polylines);
         googleMap.setCircleOverlays(getState().circles);

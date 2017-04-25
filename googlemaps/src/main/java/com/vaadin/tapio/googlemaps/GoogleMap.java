@@ -1232,7 +1232,7 @@ public class GoogleMap extends AbstractComponentContainer {
      * @return true, if the window is open.
      */
     public boolean isInfoWindowOpen(GoogleMapInfoWindow infoWindow) {
-        return getState().infoWindows.containsKey(infoWindow.getId());
+        return getState(false).infoWindows.containsKey(infoWindow.getId());
     }
 
     /**
@@ -1326,5 +1326,13 @@ public class GoogleMap extends AbstractComponentContainer {
     public void route(DirectionsRequest request, DirectionsResultCallback handler) {
         getState().directionsRequests.put(request.getId(), request);
         directionsCallbacks.put(request.getId(), handler);
+    }
+
+    public void addLabel(GoogleMapLabel label) {
+        getState().labels.put(label.getId(), label);
+    }
+
+    public void removeLabel(GoogleMapLabel label) {
+        getState().labels.remove(label.getId(), label);
     }
 }
