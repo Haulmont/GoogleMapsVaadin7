@@ -106,12 +106,20 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
     private final MapTypeChangedRpc mapTypeChangedRpc = RpcProxy.create(MapTypeChangedRpc.class, this);
 
     public GoogleMapConnector() {
+        registerRpc(PolygonRemoveVertexRpc.class, new PolygonRemoveVertexRpc() {
+            @Override
+            public void removeVertex(GoogleMapPolygon polygon, LatLon vertex) {
+                getWidget().removeVertex(polygon, vertex);
+            }
+        });
     }
 
     private void initMap() {
         final GoogleMapWidget googleMap = getWidget();
 
         googleMap.initMap(getState().center, getState().zoom, getState().mapTypeId, this);
+        googleMap.setDeleteMessage(getState().deleteMessage);
+        googleMap.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
 
         googleMap.setMarkerClickListener(this);
         googleMap.setMarkerDoubleClickListener(this);
@@ -214,7 +222,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         if (loadLibraries == null) {
             return "";
         } else {
-            String s = "libraries=";
+            StringBuilder s = new StringBuilder("libraries=");
             Iterator itr = loadLibraries.iterator();
             int i = 0;
 
@@ -222,15 +230,15 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
                 LoadApi.LoadLibrary ll = (LoadApi.LoadLibrary) itr.next();
                 if (ll != null) {
                     if (i > 0) {
-                        s = s + ",";
+                        s.append(",");
                     }
 
-                    s = s + ll.value();
+                    s.append(ll.value());
                     ++i;
                 }
             }
 
-            return s;
+            return s.toString();
         }
     }
 
