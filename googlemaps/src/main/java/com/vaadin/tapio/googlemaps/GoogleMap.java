@@ -52,6 +52,8 @@ import java.util.*;
  */
 public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
+    private static final byte MIN_VERTEX_COUNT = 3;
+
     private static final long serialVersionUID = -2869498659894907433L;
 
     /**
@@ -131,7 +133,6 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
             for (MapMoveListener listener : mapMoveListeners) {
                 listener.mapMoved(zoomLevel, center, boundsNE, boundsSW);
             }
-
         }
     };
 
@@ -1266,5 +1267,38 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
 
     public void removeLabel(GoogleMapLabel label) {
         getState().labels.remove(label.getId(), label);
+    }
+
+    public void removePolygonVertex(GoogleMapPolygon polygon, LatLon vertex) {
+        if (polygon == null || vertex == null)
+            return;
+
+        if (polygon.getCoordinates().size() <= MIN_VERTEX_COUNT)
+            return;
+
+        getRpcProxy(PolygonRemoveVertexRpc.class).removeVertex(polygon, vertex);
+    }
+
+    public void setDeleteMessage(String message) {
+        if (message == null || message.isEmpty())
+            return;
+
+        if (!getState(false).deleteMessage.equals(message)) {
+            getState().deleteMessage = message;
+        }
+    }
+
+    public String getDeleteMessage() {
+        return getState(false).deleteMessage;
+    }
+
+    public void setVertexRemovingEnabled(boolean enabled) {
+        if (getState(false).vertexRemovingEnabled != enabled) {
+            getState().vertexRemovingEnabled = enabled;
+        }
+    }
+
+    public boolean isVertexRemovingEnabled() {
+        return getState(false).vertexRemovingEnabled;
     }
 }

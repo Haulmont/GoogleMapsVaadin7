@@ -99,6 +99,12 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
     private CircleCompleteRpc circleCompleteRpc = RpcProxy.create(CircleCompleteRpc.class, this);
 
     public GoogleMapConnector() {
+        registerRpc(PolygonRemoveVertexRpc.class, new PolygonRemoveVertexRpc() {
+            @Override
+            public void removeVertex(GoogleMapPolygon polygon, LatLon vertex) {
+                getWidget().removeVertex(polygon, vertex);
+            }
+        });
     }
 
     private void initMap() {
@@ -106,6 +112,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
         googleMap.setVisualRefreshEnabled(getState().visualRefreshEnabled);
         googleMap.initMap(getState().center, getState().zoom, getState().mapTypeId, this);
+        googleMap.setDeleteMessage(getState().deleteMessage);
+        googleMap.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
 
         googleMap.setMarkerClickListener(this);
         googleMap.setMarkerDoubleClickListener(this);
@@ -202,6 +210,14 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             if (getState().zoom != widget.getZoom()) {
                 widget.setZoom(getState().zoom);
             }
+        }
+
+        if (stateChangeEvent.hasPropertyChanged("deleteMessage") || initial) {
+            widget.setDeleteMessage(getState().deleteMessage);
+        }
+
+        if (stateChangeEvent.hasPropertyChanged("vertexRemovingEnabled")) {
+            widget.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
         }
 
         if (stateChangeEvent.hasPropertyChanged("markers") || initial) {
@@ -364,7 +380,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
         if (loadLibraries == null) {
             return "";
         } else {
-            String s = "libraries=";
+            StringBuilder s = new StringBuilder("libraries=");
             Iterator itr = loadLibraries.iterator();
             int i = 0;
 
@@ -372,15 +388,15 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
                 LoadApi.LoadLibrary ll = (LoadApi.LoadLibrary) itr.next();
                 if (ll != null) {
                     if (i > 0) {
-                        s = s + ",";
+                        s.append(",");
                     }
 
-                    s = s + ll.value();
+                    s.append(ll.value());
                     ++i;
                 }
             }
 
-            return s;
+            return s.toString();
         }
     }
 

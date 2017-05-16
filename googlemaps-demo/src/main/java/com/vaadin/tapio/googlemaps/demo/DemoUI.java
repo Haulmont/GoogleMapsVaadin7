@@ -84,6 +84,7 @@ public class DemoUI extends UI {
         content.setSizeFull();
         content.setSpacing(true);
         final GoogleMap googleMap = createGoogleMap();
+        googleMap.setDeleteMessage("Delete vertex");
 
         googleMap.setSizeFull();
         createDefaultMapElements(googleMap);
@@ -241,31 +242,15 @@ public class DemoUI extends UI {
         kakolaInfoWindow.setWidth("400px");
         kakolaInfoWindow.setHeight("500px");
 
-//        googleMap.addCont
-//        googleMap.addImageMapType();
-
-//        GoogleImageMapType gisDoctor = new GoogleImageMapType(1.0, new GoogleTileUrlCallback() {
-//            @Override
-//            public String getTileUrl(double x, double y, int zoom) {
-//                return formGisDoctorUrl(x, y, zoom);
-//            }
-//        }, "GIS");
-
         String tileFunction = "f = function f(x, y, zoom) {" +
                 "return \"http://tile.openstreetmap.org/\" + zoom + \"/\" + x + \"/\" + y + \".png\";}";
         final GoogleImageMapType osm = new GoogleImageMapType(1.0, tileFunction);
         osm.setName("OpenStreet Maps");
         osm.setMapTypeId("OSM");
         googleMap.addImageMapType(osm);
-//        googleMap.setMapType("OSM");
 
         googleMap.setMapTypes(Arrays.asList("roadmap", "OSM"));
-
     }
-
-//    private String formGisDoctorUrl(double x, double y, int zoom) {
-//        double zpow = Math.pow(2, zoom);
-//    }
 
     private GoogleMap createGoogleMap() {
         return new GoogleMap(new LatLon(60.440963, 22.25122), 10, apiKey, null, null, new MapInitListener() {
@@ -280,26 +265,53 @@ public class DemoUI extends UI {
     }
 
     private void createButtonsRow2(VerticalLayout content, final GoogleMap googleMap, final CssLayout consoleLayout) {
-        HorizontalLayout buttonLayoutRow2 = new HorizontalLayout();
+        final HorizontalLayout buttonLayoutRow2 = new HorizontalLayout();
         buttonLayoutRow2.setSpacing(true);
         buttonLayoutRow2.setHeight("26px");
         content.addComponent(buttonLayoutRow2);
+
+        final Button[] removePolygonVertex = new Button[1];
 
         Button addPolyOverlayButton = new Button("Add overlay over Luonnonmaa",
                 new Button.ClickListener() {
                     @Override
                     public void buttonClick(ClickEvent event) {
                         ArrayList<LatLon> points = new ArrayList<LatLon>();
-                        points.add(new LatLon(60.484715, 21.923706));
+                        final LatLon latLon = new LatLon(60.484715, 21.923706);
+                        points.add(latLon);
                         points.add(new LatLon(60.446636, 21.941387));
                         points.add(new LatLon(60.422496, 21.99546));
                         points.add(new LatLon(60.427326, 22.06464));
                         points.add(new LatLon(60.446467, 22.064297));
 
-                        GoogleMapPolygon overlay = new GoogleMapPolygon(points,
+                        final GoogleMapPolygon overlay = new GoogleMapPolygon(points,
                                 "#ae1f1f", 0.8, "#194915", 0.5, 3);
                         googleMap.addPolygonOverlay(overlay);
+                        overlay.setEditable(true);
                         event.getButton().setEnabled(false);
+
+                        googleMap.addPolygonEditListener(new PolygonEditListener() {
+                            @Override
+                            public void polygonEdited(GoogleMapPolygon googleMapPolygon, ActionType actionType, int i, LatLon latLon) {
+                                Notification.show("Polygon was changed. Action: " + actionType.name() + ". Vertex idx: " + i, Notification.Type.ERROR_MESSAGE);
+                            }
+                        });
+
+                        removePolygonVertex[0] = new Button("Remove first vertex", new Button.ClickListener() {
+                            @Override
+                            public void buttonClick(ClickEvent clickEvent) {
+                                googleMap.removePolygonVertex(overlay, latLon);
+                            }
+                        });
+                        buttonLayoutRow2.addComponent(removePolygonVertex[0], 1);
+
+                        Button enableVertexRemovingButton = new Button("Toggle vertex removing ability", new Button.ClickListener() {
+                            @Override
+                            public void buttonClick(ClickEvent clickEvent) {
+                                googleMap.setVertexRemovingEnabled(!googleMap.isVertexRemovingEnabled());
+                            }
+                        });
+                        buttonLayoutRow2.addComponent(enableVertexRemovingButton, 2);
                     }
                 });
         buttonLayoutRow2.addComponent(addPolyOverlayButton);

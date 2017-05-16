@@ -83,6 +83,8 @@ import com.vaadin.tapio.googlemaps.client.services.DirectionsRequest;
 
 import java.util.*;
 
+import static com.vaadin.tapio.googlemaps.client.events.PolygonEditListener.ActionType.*;
+
 public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public static final String CLASSNAME = "googlemap";
@@ -137,6 +139,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private boolean forceBoundUpdate = false;
     private boolean initListenerNotified = false;
     private transient boolean markerDoubleClicked = false;
+    private String deleteMessage = "Delete";
+    private boolean vertexRemovingEnabled = false;
 
     public GoogleMapWidget() {
         setStyleName(CLASSNAME);
@@ -213,6 +217,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         });
 
         initLabelOverlay();
+        initDeleteVertexOverlay();
     }
 
     private LatLon getCenter(MapImpl mapImpl) {
@@ -654,8 +659,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         for (GoogleMapPolygon overlay : polyOverlays.values()) {
             final MVCArray<LatLng> points = MVCArray.newInstance();
             for (LatLon latLon : overlay.getCoordinates()) {
-                LatLng latLng = LatLng.newInstance(latLon.getLat(),
-                        latLon.getLon());
+                LatLng latLng = LatLng.newInstance(latLon.getLat(), latLon.getLon());
                 points.push(latLng);
             }
 
@@ -667,6 +671,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             options.setStrokeOpacity(overlay.getStrokeOpacity());
             options.setStrokeWeight(overlay.getStrokeWeight());
             options.setZindex(overlay.getzIndex());
+            options.setMap(map);
 
             Polygon polygon = Polygon.newInstance(options);
             polygon.setPath(points);
@@ -674,9 +679,114 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             polygon.setEditable(overlay.isEditable());
             attachPolygonEditListeners(polygon, overlay);
             polygonMap.put(polygon, overlay);
+
+            addPolygonVertexClickListener(polygon);
+        }
+    }
+
+    private native void addPolygonVertexClickListener(Polygon polygon) /*-{
+        var that = this;
+
+        if ($wnd.deleteOverlay == undefined) {
+            $wnd.deleteOverlay = new $wnd.DeleteVertexOverlay();
         }
 
-    }
+        $wnd.google.maps.event.addListener(polygon, 'rightclick', function(e) {
+            var removingEnabled = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::isVertexRemovingEnabled()();
+            if (!removingEnabled) {
+                return;
+            }
+
+            if (e.vertex != undefined) {
+                var map = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getMapImpl()();
+                $wnd.deleteOverlay.open(map, polygon, e.vertex);
+            }
+        });
+    }-*/;
+
+    private native void initDeleteVertexOverlay() /*-{
+        var that = this;
+        $wnd.DeleteVertexOverlay = function() {
+            this.div_ = document.createElement('div');
+            this.div_.className = 'delete-vertex-overlay';
+
+            var deleteMessage = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getDeleteMessage()();
+            this.div_.innerHTML = deleteMessage;
+
+            var menu = this;
+            $wnd.google.maps.event.addDomListener(this.div_, 'click', function() {
+                menu.removeVertex();
+            });
+        }
+        $wnd.DeleteVertexOverlay.prototype = new $wnd.google.maps.OverlayView();
+
+        $wnd.DeleteVertexOverlay.prototype.onAdd = function() {
+            var deleteOverlay = this;
+            var map = this.getMap();
+            this.getPanes().floatPane.appendChild(this.div_);
+
+            this.divListener_ = $wnd.google.maps.event.addDomListener(map.getDiv(), 'mousedown', function(e) {
+                if (e.target != deleteOverlay.div_) {
+                    deleteOverlay.close();
+                }
+            }, true);
+        };
+
+        $wnd.DeleteVertexOverlay.prototype.onRemove = function() {
+            $wnd.google.maps.event.removeListener(this.divListener_);
+            this.div_.parentNode.removeChild(this.div_);
+
+            this.set('position');
+            this.set('polygon');
+            this.set('vertex');
+        };
+
+        $wnd.DeleteVertexOverlay.prototype.close = function() {
+            this.setMap(null);
+        };
+
+        $wnd.DeleteVertexOverlay.prototype.draw = function() {
+            var position = this.get('position');
+            var projection = this.getProjection();
+
+            if (!position || !projection) {
+                return;
+            }
+
+            var point = projection.fromLatLngToDivPixel(position);
+            this.div_.style.top = point.y + 'px';
+            this.div_.style.left = point.x + 'px';
+        };
+
+        $wnd.DeleteVertexOverlay.prototype.open = function(map, polygon, vertex) {
+            this.set('position', polygon.getPath().getAt(vertex));
+            this.set('polygon', polygon);
+            this.set('vertex', vertex);
+            this.setMap(map);
+            this.draw();
+        };
+
+        $wnd.DeleteVertexOverlay.prototype.removeVertex = function() {
+            var polygon = this.get('polygon');
+            var path = polygon.getPath();
+
+            if (path.length <= 3) {
+                this.close();
+                return;
+            }
+
+            var vertex = this.get('vertex');
+
+            if (!path || vertex == undefined) {
+                this.close();
+                return;
+            }
+
+            path.removeAt(vertex);
+
+            this.close();
+        };
+    }-*/;
 
     public void setCircleOverlays(Map<Long, GoogleMapCircle> circleOverlays) {
         for (Circle circle : circleMap.keySet()) {
@@ -1133,8 +1243,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         drawingManager.addCircleCompleteHandler(new CircleCompleteMapHandler(vCircleOptions));
     }
 
-    private void attachPolygonEditListeners(final Polygon polygon,
-                                            final GoogleMapPolygon vPolygon) {
+    private void attachPolygonEditListeners(final Polygon polygon, final GoogleMapPolygon vPolygon) {
         polygon.addClickHandler(new ClickMapHandler() {
             @Override
             public void onEvent(ClickMapEvent event) {
@@ -1163,23 +1272,36 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         if (path != null) {
             path.addInsertAtHandler(new InsertAtMapHandler() {
                 @Override
-                public void onEvent(InsertAtMapEvent event) {
-                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
-                            PolygonEditListener.ActionType.INSERT);
+                public void onEvent(final InsertAtMapEvent event) {
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        @Override
+                        public void execute() {
+                            firePolygonEdited(polygon, vPolygon, event.getIndex(), INSERT);
+                        }
+                    });
                 }
             });
             path.addSetAtHandler(new SetAtMapHandler() {
                 @Override
-                public void onEvent(SetAtMapEvent event) {
-                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
-                            PolygonEditListener.ActionType.SET);
+                public void onEvent(final SetAtMapEvent event) {
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        @Override
+                        public void execute() {
+                            firePolygonEdited(polygon, vPolygon, event.getIndex(), SET);
+                        }
+                    });
                 }
             });
             path.addRemoveAtHandler(new RemoveAtMapHandler() {
                 @Override
-                public void onEvent(RemoveAtMapEvent event) {
-                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
-                            PolygonEditListener.ActionType.REMOVE);
+                public void onEvent(final RemoveAtMapEvent event) {
+                    com.google.gwt.ajaxloader.client.Properties properties = event.getProperties();
+                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
+                        @Override
+                        public void execute() {
+                            firePolygonEdited(polygon, vPolygon, event.getIndex(), REMOVE);
+                        }
+                    });
                 }
             });
         }
@@ -1187,7 +1309,15 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     private void firePolygonEdited(Polygon polygon, GoogleMapPolygon
             vPolygon, int idx, PolygonEditListener.ActionType action) {
-        LatLng latLng = polygon.getPath().get(idx);
+        LatLng latLng;
+
+        if (REMOVE == action) {
+            LatLon latLon = vPolygon.getCoordinates().get(idx);
+            latLng = LatLng.newInstance(latLon.getLat(), latLon.getLon());
+        } else {
+            latLng = polygon.getPath().get(idx);
+        }
+
         switch (action) {
             case INSERT:
                 vPolygon.getCoordinates().add(idx, GoogleMapAdapterUtils.fromLatLng(latLng));
@@ -1298,7 +1428,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
             var panes = this.getPanes();
             panes.overlayLayer.appendChild(div);
-        }
+        };
 
         $wnd.LabelOverlay.prototype.onRemove = function() {
             this.div.parentNode.removeChild(this.div);
@@ -1320,6 +1450,47 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     protected MapImpl getMapImpl() {
         return mapImpl;
+    }
+
+    public void setDeleteMessage(String deleteMessage) {
+        this.deleteMessage = deleteMessage;
+    }
+
+    public String getDeleteMessage() {
+        return deleteMessage;
+    }
+
+    protected void removeVertex(GoogleMapPolygon polygon, LatLon vertex) {
+        Polygon vPolygon = null;
+        for (Map.Entry<Polygon, GoogleMapPolygon> entry : polygonMap.entrySet()) {
+            if (entry.getValue().equals(polygon)) {
+                vPolygon = entry.getKey();
+                break;
+            }
+        }
+        if (vPolygon == null)
+            return;
+
+        LatLng latLng = LatLng.newInstance(vertex.getLat(), vertex.getLon());
+        Integer idx = null;
+        MVCArray<LatLng> path = vPolygon.getPath();
+        for (int i = 0; i < path.getLength(); i++) {
+            if (latLng.equals(path.get(i))) {
+                idx = i;
+                break;
+            }
+        }
+        if (idx != null) {
+            path.removeAt(idx);
+        }
+    }
+
+    protected void setVertexRemovingEnabled(boolean vertexRemovingEnabled) {
+        this.vertexRemovingEnabled = vertexRemovingEnabled;
+    }
+
+    protected boolean isVertexRemovingEnabled() {
+        return vertexRemovingEnabled;
     }
 
     private class PolygonCompleteMapHandler implements
