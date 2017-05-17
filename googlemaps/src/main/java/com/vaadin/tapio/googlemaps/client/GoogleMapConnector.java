@@ -118,7 +118,7 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         final GoogleMapWidget googleMap = getWidget();
 
         googleMap.initMap(getState().center, getState().zoom, getState().mapTypeId, this);
-        googleMap.setDeleteMessage(getState().deleteMessage);
+        googleMap.setRemoveMessage(getState().removeMessage);
         googleMap.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
 
         googleMap.setMarkerClickListener(this);
@@ -290,6 +290,8 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
         googleMap.setMaxZoom(getState().maxZoom);
         googleMap.setDrawingOptions(getState().drawingOptions);
         googleMap.processDirectionRequests(getState().directionsRequests.values());
+        googleMap.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
+        googleMap.setRemoveMessage(getState().removeMessage);
         if (getState().fitToBoundsNE != null
                 && getState().fitToBoundsSW != null) {
             googleMap.fitToBounds(getState().fitToBoundsNE,

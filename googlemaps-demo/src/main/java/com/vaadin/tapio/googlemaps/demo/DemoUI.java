@@ -83,7 +83,7 @@ public class DemoUI extends UI {
         content.setSizeFull();
         content.setSpacing(true);
         final GoogleMap googleMap = createGoogleMap();
-        googleMap.setDeleteMessage("Delete vertex");
+        googleMap.setRemoveMessage("Remove vertex");
 
         googleMap.setSizeFull();
 
@@ -336,6 +336,14 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow2.addComponent(addPolyOverlayButton);
+
+        Button changeRemoveMessage = new Button("Change remove message", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                googleMap.setRemoveMessage("Custom remove message");
+            }
+        });
+        buttonLayoutRow2.addComponent(changeRemoveMessage);
 
         Button addPolyLineButton = new Button("Draw line from Turku to Raisio",
                 new Button.ClickListener() {
