@@ -139,7 +139,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     private boolean forceBoundUpdate = false;
     private boolean initListenerNotified = false;
     private transient boolean markerDoubleClicked = false;
-    private String deleteMessage = "Delete";
+    private String removeMessage = "Remove";
     private boolean vertexRemovingEnabled = false;
 
     public GoogleMapWidget() {
@@ -196,23 +196,32 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
         mapImpl.addClickHandler(new ClickMapHandler() {
             @Override
-            public void onEvent(ClickMapEvent event) {
-                if (mapClickListener != null) {
-                    LatLng latLng = event.getMouseEvent().getLatLng();
-                    LatLon position = new LatLon(latLng.getLatitude(),
-                            latLng.getLongitude());
-                    mapClickListener.mapClicked(position);
-                }
+            public void onEvent(final ClickMapEvent event) {
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        if (mapClickListener != null) {
+                            LatLng latLng = event.getMouseEvent().getLatLng();
+                            LatLon position = new LatLon(latLng.getLatitude(), latLng.getLongitude());
+                            mapClickListener.mapClicked(position);
+                        }
+                    }
+                });
             }
         });
         mapImpl.addRightClickHandler(new RightClickMapHandler() {
             @Override
-            public void onEvent(RightClickMapEvent rightClickMapEvent) {
-                if (mapRightClickListener != null) {
-                    LatLng latLng = rightClickMapEvent.getMouseEvent().getLatLng();
-                    LatLon position = new LatLon(latLng.getLatitude(), latLng.getLongitude());
-                    mapRightClickListener.mapRightClicked(position);
-                }
+            public void onEvent(final RightClickMapEvent rightClickMapEvent) {
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        if (mapRightClickListener != null) {
+                            LatLng latLng = rightClickMapEvent.getMouseEvent().getLatLng();
+                            LatLon position = new LatLon(latLng.getLatitude(), latLng.getLongitude());
+                            mapRightClickListener.mapRightClicked(position);
+                        }
+                    }
+                });
             }
         });
 
@@ -221,18 +230,17 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     }
 
     private LatLon getCenter(MapImpl mapImpl) {
-        return new LatLon(mapImpl.getCenter().getLatitude(),
-                mapImpl.getCenter().getLongitude());
+        return new LatLon(mapImpl.getCenter().getLatitude(), mapImpl.getCenter().getLongitude());
     }
 
     private LatLon getBoundSW(MapImpl mapImpl) {
-        return new LatLon(mapImpl.getBounds().getSouthWest().getLatitude(),
-                mapImpl.getBounds().getSouthWest().getLongitude());
+        LatLng southWest = mapImpl.getBounds().getSouthWest();
+        return new LatLon(southWest.getLatitude(), southWest.getLongitude());
     }
 
     private LatLon getBoundNE(MapImpl mapImpl) {
-        return new LatLon(mapImpl.getBounds().getNorthEast().getLatitude(),
-                mapImpl.getBounds().getNorthEast().getLongitude());
+        LatLng northEast = mapImpl.getBounds().getNorthEast();
+        return new LatLon(northEast.getLatitude(), northEast.getLongitude());
     }
 
     private boolean checkVisibleAreaBoundLimits() {
@@ -390,8 +398,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     public void onEvent(DblClickMapEvent event) {
                         markerDoubleClicked = true;
                         if (markerDoubleClickListener != null) {
-                            markerDoubleClickListener.markerDoubleClicked(markerMap
-                                    .get(marker));
+                            markerDoubleClickListener.markerDoubleClicked(markerMap.get(marker));
                         }
                         Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
                             @Override
@@ -412,8 +419,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     public void onEvent(DragEndMapEvent event) {
                         GoogleMapMarker gMarker = markerMap.get(marker);
                         LatLon oldPosition = gMarker.getPosition();
-                        gMarker.setPosition(new LatLon(marker.getPosition()
-                                .getLatitude(), marker.getPosition().getLongitude()));
+                        gMarker.setPosition(new LatLon(marker.getPosition().getLatitude(),
+                                marker.getPosition().getLongitude()));
 
                         if (markerDragListener != null) {
                             markerDragListener.markerDragged(gMarker,
@@ -686,11 +693,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     private native void addPolygonVertexClickListener(Polygon polygon) /*-{
         var that = this;
-
-        if ($wnd.deleteOverlay == undefined) {
-            $wnd.deleteOverlay = new $wnd.DeleteVertexOverlay();
-        }
-
         $wnd.google.maps.event.addListener(polygon, 'rightclick', function(e) {
             var removingEnabled = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::isVertexRemovingEnabled()();
             if (!removingEnabled) {
@@ -699,7 +701,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
             if (e.vertex != undefined) {
                 var map = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getMapImpl()();
-                $wnd.deleteOverlay.open(map, polygon, e.vertex);
+                var deleteOverlay = new $wnd.DeleteVertexOverlay();
+                deleteOverlay.open(map, polygon, e.vertex);
             }
         });
     }-*/;
@@ -709,9 +712,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         $wnd.DeleteVertexOverlay = function() {
             this.div_ = document.createElement('div');
             this.div_.className = 'delete-vertex-overlay';
-
-            var deleteMessage = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getDeleteMessage()();
-            this.div_.innerHTML = deleteMessage;
 
             var menu = this;
             $wnd.google.maps.event.addDomListener(this.div_, 'click', function() {
@@ -762,6 +762,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             this.set('position', polygon.getPath().getAt(vertex));
             this.set('polygon', polygon);
             this.set('vertex', vertex);
+
+            var deleteMessage = that.@com.vaadin.tapio.googlemaps.client.GoogleMapWidget::getRemoveMessage()();
+            this.div_.innerHTML = deleteMessage;
+
             this.setMap(map);
             this.draw();
         };
@@ -795,7 +799,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         circleMap.clear();
 
         for (GoogleMapCircle overlay : circleOverlays.values()) {
-
             CircleOptions options = CircleOptions.newInstance();
 
             options.setCenter(GoogleMapAdapterUtils.toLatLng(overlay.getCenter()));
@@ -823,53 +826,64 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         circle.addCenterChangeHandler(new CenterChangeMapHandler() {
             @Override
             public void onEvent(CenterChangeMapEvent event) {
-                GoogleMapCircle vCircle = circleMap.get(circle);
-                vCircle.setCenter(GoogleMapAdapterUtils.fromLatLng(circle.getCenter()));
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        GoogleMapCircle vCircle = circleMap.get(circle);
+                        vCircle.setCenter(GoogleMapAdapterUtils.fromLatLng(circle.getCenter()));
 
-                LatLon vOldCenter = vCircle.getCenter();
-                LatLng gwtOldCenter = LatLng.newInstance(vOldCenter.getLat(), vOldCenter.getLon());
-                if (circleCenterChangeListener != null && !Objects.equals(gwtOldCenter, circle.getCenter())) {
-                    circleCenterChangeListener.centerChanged(vCircle, vOldCenter);
-                }
+                        LatLon vOldCenter = vCircle.getCenter();
+                        LatLng gwtOldCenter = LatLng.newInstance(vOldCenter.getLat(), vOldCenter.getLon());
+
+                        if (circleCenterChangeListener != null && !Objects.equals(gwtOldCenter, circle.getCenter())) {
+                            circleCenterChangeListener.centerChanged(vCircle, vOldCenter);
+                        }
+                    }
+                });
             }
         });
         circle.addClickHandler(new ClickMapHandler() {
             @Override
             public void onEvent(ClickMapEvent event) {
-                if (circleClickListener != null) {
-                    final GoogleMapCircle vCircle = circleMap.get(circle);
-                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                        @Override
-                        public void execute() {
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        if (circleClickListener != null) {
+                            final GoogleMapCircle vCircle = circleMap.get(circle);
                             circleClickListener.circleClicked(vCircle);
                         }
-                    });
-                }
+                    }
+                });
             }
         });
         circle.addDblClickHandler(new DblClickMapHandler() {
             @Override
             public void onEvent(DblClickMapEvent event) {
-                if (circleDoubleClickListener != null) {
-                    final GoogleMapCircle vCircle = circleMap.get(circle);
-                    Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand() {
-                        @Override
-                        public void execute() {
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        if (circleDoubleClickListener != null) {
+                            final GoogleMapCircle vCircle = circleMap.get(circle);
                             circleDoubleClickListener.circleDoubleClicked(vCircle);
                         }
-                    });
-                }
+                    }
+                });
             }
         });
         circle.addRadiusChangeHandler(new RadiusChangeMapHandler() {
             @Override
             public void onEvent(RadiusChangeMapEvent event) {
-                GoogleMapCircle vCircle = circleMap.get(circle);
-                double oldRadius = vCircle.getRadius();
-                vCircle.setRadius(circle.getRadius());
-                if (circleRadiusChangeListener != null && vCircle.getRadius() != oldRadius) {
-                    circleRadiusChangeListener.radiusChange(vCircle, oldRadius);
-                }
+                Scheduler.get().scheduleDeferred(new Command() {
+                    @Override
+                    public void execute() {
+                        final GoogleMapCircle vCircle = circleMap.get(circle);
+                        final double oldRadius = vCircle.getRadius();
+                        vCircle.setRadius(circle.getRadius());
+                        if (circleRadiusChangeListener != null && vCircle.getRadius() != oldRadius) {
+                            circleRadiusChangeListener.radiusChange(vCircle, oldRadius);
+                        }
+                    }
+                });
             }
         });
         circle.addRightClickHandler(new RightClickMapHandler() {
@@ -1033,11 +1047,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         }
         map.setOptions(mapOptions);
     }
-//
-//    public void setMapTypeString(String mapTypeId) {
-//        mapOptions.setMapTypeId(mapTypeId.toUpperCase());
-//        map.setOptions(mapOptions);
-//    }
 
     public void setControls(Set<GoogleMapControl> controls) {
         mapOptions.setMapTypeControl(controls
@@ -1158,12 +1167,10 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             infoWindowMap.put(window, gmWindow);
 
             window.addCloseClickHandler(new CloseClickMapHandler() {
-
                 @Override
                 public void onEvent(CloseClickMapEvent event) {
                     if (infoWindowClosedListener != null) {
-                        infoWindowClosedListener.infoWindowClosed(infoWindowMap
-                                .get(window));
+                        infoWindowClosedListener.infoWindowClosed(infoWindowMap.get(window));
                     }
                 }
             });
@@ -1452,12 +1459,12 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         return mapImpl;
     }
 
-    public void setDeleteMessage(String deleteMessage) {
-        this.deleteMessage = deleteMessage;
+    public void setRemoveMessage(String removeMessage) {
+        this.removeMessage = removeMessage;
     }
 
-    public String getDeleteMessage() {
-        return deleteMessage;
+    public String getRemoveMessage() {
+        return removeMessage;
     }
 
     protected void removeVertex(GoogleMapPolygon polygon, LatLon vertex) {
@@ -1573,7 +1580,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
     }
 
     native public void consoleLog(String message) /*-{
-      console.log(message );
+      console.log(message);
     }-*/;
 
     private class GoogleDirectionsResultHandler implements com.google.gwt.maps.client.services.DirectionsResultHandler {

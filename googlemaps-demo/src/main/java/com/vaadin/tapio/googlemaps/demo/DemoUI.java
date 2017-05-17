@@ -15,8 +15,6 @@ import com.vaadin.tapio.googlemaps.client.base.LatLon;
 import com.vaadin.tapio.googlemaps.client.base.MarkerImage;
 import com.vaadin.tapio.googlemaps.client.base.Point;
 import com.vaadin.tapio.googlemaps.client.base.WeightedLocation;
-import com.vaadin.tapio.googlemaps.client.drawing.*;
-import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.events.centerchange.CircleCenterChangeListener;
 import com.vaadin.tapio.googlemaps.client.events.click.CircleClickListener;
 import com.vaadin.tapio.googlemaps.client.events.click.MapClickListener;
@@ -33,10 +31,8 @@ import com.vaadin.tapio.googlemaps.client.events.rightclick.PolygonRightClickLis
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapHeatMapLayer;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.maptypes.GoogleImageMapType;
-import com.vaadin.tapio.googlemaps.client.overlays.*;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapLabel.Adjustment;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapLabel.ContentType;
-import com.vaadin.tapio.googlemaps.client.services.*;
 import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListener;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
@@ -84,7 +80,7 @@ public class DemoUI extends UI {
         content.setSizeFull();
         content.setSpacing(true);
         final GoogleMap googleMap = createGoogleMap();
-        googleMap.setDeleteMessage("Delete vertex");
+        googleMap.setRemoveMessage("Remove vertex");
 
         googleMap.setSizeFull();
         createDefaultMapElements(googleMap);
@@ -315,6 +311,14 @@ public class DemoUI extends UI {
                     }
                 });
         buttonLayoutRow2.addComponent(addPolyOverlayButton);
+
+        Button changeRemoveMessage = new Button("Change remove message", new Button.ClickListener() {
+            @Override
+            public void buttonClick(ClickEvent clickEvent) {
+                googleMap.setRemoveMessage("Custom remove message");
+            }
+        });
+        buttonLayoutRow2.addComponent(changeRemoveMessage);
 
         Button addPolyLineButton = new Button("Draw line from Turku to Raisio",
                 new Button.ClickListener() {

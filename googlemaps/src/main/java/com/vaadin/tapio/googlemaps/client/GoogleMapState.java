@@ -33,7 +33,7 @@ public class GoogleMapState extends AbstractComponentState {
     public int maxZoom = 21;
     public int minZoom = 0;
 
-    public String deleteMessage = "Delete";
+    public String removeMessage = "Remove";
     public boolean vertexRemovingEnabled = false;
 
     public boolean draggable = true;

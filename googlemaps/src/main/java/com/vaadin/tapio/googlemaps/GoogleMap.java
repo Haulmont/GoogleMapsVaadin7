@@ -1279,17 +1279,17 @@ public class GoogleMap extends com.vaadin.ui.AbstractComponent {
         getRpcProxy(PolygonRemoveVertexRpc.class).removeVertex(polygon, vertex);
     }
 
-    public void setDeleteMessage(String message) {
+    public void setRemoveMessage(String message) {
         if (message == null || message.isEmpty())
             return;
 
-        if (!getState(false).deleteMessage.equals(message)) {
-            getState().deleteMessage = message;
+        if (!getState(false).removeMessage.equals(message)) {
+            getState().removeMessage = message;
         }
     }
 
-    public String getDeleteMessage() {
-        return getState(false).deleteMessage;
+    public String getRemoveMessage() {
+        return getState(false).removeMessage;
     }
 
     public void setVertexRemovingEnabled(boolean enabled) {

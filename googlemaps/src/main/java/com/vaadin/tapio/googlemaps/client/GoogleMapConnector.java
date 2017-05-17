@@ -112,7 +112,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
         googleMap.setVisualRefreshEnabled(getState().visualRefreshEnabled);
         googleMap.initMap(getState().center, getState().zoom, getState().mapTypeId, this);
-        googleMap.setDeleteMessage(getState().deleteMessage);
+        googleMap.setRemoveMessage(getState().removeMessage);
         googleMap.setVertexRemovingEnabled(getState().vertexRemovingEnabled);
 
         googleMap.setMarkerClickListener(this);
@@ -212,8 +212,8 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             }
         }
 
-        if (stateChangeEvent.hasPropertyChanged("deleteMessage") || initial) {
-            widget.setDeleteMessage(getState().deleteMessage);
+        if (stateChangeEvent.hasPropertyChanged("removeMessage") || initial) {
+            widget.setRemoveMessage(getState().removeMessage);
         }
 
         if (stateChangeEvent.hasPropertyChanged("vertexRemovingEnabled")) {
