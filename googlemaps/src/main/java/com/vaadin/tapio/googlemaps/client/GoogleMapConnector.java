@@ -327,7 +327,9 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
 
     @Override
     public void markerDoubleClicked(GoogleMapMarker clickedMarker) {
-        markerDoubleClickedRpc.markerClicked(clickedMarker.getId());
+        if (isEnabled()) {
+            markerDoubleClickedRpc.markerClicked(clickedMarker.getId());
+        }
     }
 
     @Override
@@ -337,7 +339,9 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
 
     @Override
     public void init(LatLon center, int zoom, LatLon boundsNE, LatLon boundsSW) {
-        mapInitRpc.init(center, zoom, boundsNE, boundsSW);
+        if (isEnabled()) {
+            mapInitRpc.init(center, zoom, boundsNE, boundsSW);
+        }
     }
 
     @Override
@@ -347,35 +351,47 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
 
     @Override
     public void infoWindowClosed(GoogleMapInfoWindow window) {
-        infoWindowClosedRpc.infoWindowClosed(window.getId());
+        if (isEnabled()) {
+            infoWindowClosedRpc.infoWindowClosed(window.getId());
+        }
     }
 
     @Override
     public void markerDragged(GoogleMapMarker draggedMarker,
-        LatLon oldPosition) {
-        markerDraggedRpc.markerDragged(draggedMarker.getId(),
-            draggedMarker.getPosition());
+                              LatLon oldPosition) {
+        if (isEnabled()) {
+            markerDraggedRpc.markerDragged(draggedMarker.getId(),
+                    draggedMarker.getPosition());
+        }
     }
 
     @Override
     public void polygonComplete(GoogleMapPolygon polygon) {
-        polygonCompleteRpc.polygonComplete(polygon);
+        if (isEnabled()) {
+            polygonCompleteRpc.polygonComplete(polygon);
+        }
     }
 
     @Override
     public void mapClicked(LatLon position) {
-        mapClickRpc.mapClicked(position);
+        if (isEnabled()) {
+            mapClickRpc.mapClicked(position);
+        }
     }
 
     @Override
     public void mapMoved(int zoomLevel, LatLon center, LatLon boundsNE,
                          LatLon boundsSW) {
-        mapMovedRpc.mapMoved(zoomLevel, center, boundsNE, boundsSW);
+        if (isEnabled()) {
+            mapMovedRpc.mapMoved(zoomLevel, center, boundsNE, boundsSW);
+        }
     }
 
     @Override
     public void markerClicked(GoogleMapMarker clickedMarker) {
-        markerClickedRpc.markerClicked(clickedMarker.getId());
+        if (isEnabled()) {
+            markerClickedRpc.markerClicked(clickedMarker.getId());
+        }
     }
 
     @Override
@@ -418,61 +434,85 @@ public class GoogleMapConnector extends AbstractComponentContainerConnector impl
 
     @Override
     public void polygonEdited(GoogleMapPolygon polygon, ActionType actionType, int idx, LatLon latLon) {
-        polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
+        if (isEnabled()) {
+            polygonEditRpc.polygonEdited(polygon.getId(), actionType, idx, latLon);
+        }
     }
 
     @Override
     public void polygonClicked(GoogleMapPolygon polygon) {
-        polygonClickedRpc.polygonClicked(polygon.getId());
+        if (isEnabled()) {
+            polygonClickedRpc.polygonClicked(polygon.getId());
+        }
     }
 
     @Override
     public void handle(long requestId, DirectionsResult result, DirectionsStatus status) {
-        handleDirectionsResultRpc.handle(result, status, requestId);
+        if (isEnabled()) {
+            handleDirectionsResultRpc.handle(result, status, requestId);
+        }
     }
 
     @Override
     public void radiusChange(GoogleMapCircle circle, double oldRadius) {
-        circleRadiusChangeRpc.radiusChanged(circle.getId(), circle.getRadius());
+        if (isEnabled()) {
+            circleRadiusChangeRpc.radiusChanged(circle.getId(), circle.getRadius());
+        }
     }
 
     @Override
     public void circleDoubleClicked(GoogleMapCircle circle) {
-        circleDoubleClickRpc.circleDoubleClicked(circle.getId());
+        if (isEnabled()) {
+            circleDoubleClickRpc.circleDoubleClicked(circle.getId());
+        }
     }
 
     @Override
     public void circleComplete(GoogleMapCircle circle) {
-        circleCompleteRpc.circleComplete(circle);
+        if (isEnabled()) {
+            circleCompleteRpc.circleComplete(circle);
+        }
     }
 
     @Override
     public void circleClicked(GoogleMapCircle clickedCircle) {
-        circleClickedRpc.circleClicked(clickedCircle.getId());
+        if (isEnabled()) {
+            circleClickedRpc.circleClicked(clickedCircle.getId());
+        }
     }
 
     @Override
     public void centerChanged(GoogleMapCircle circle, LatLon oldCenter) {
-        circleCenterChangeRpc.centerChanged(circle.getId(), circle.getCenter());
+        if (isEnabled()) {
+            circleCenterChangeRpc.centerChanged(circle.getId(), circle.getCenter());
+        }
     }
 
     @Override
     public void mapRightClicked(LatLon position) {
-        mapRightClickedRpc.mapRightClicked(position);
+        if (isEnabled()) {
+            mapRightClickedRpc.mapRightClicked(position);
+        }
     }
 
     @Override
     public void circleRightClicked(GoogleMapCircle circle) {
-        circleRightClickedRpc.circleRightClicked(circle.getId());
+        if (isEnabled()) {
+            circleRightClickedRpc.circleRightClicked(circle.getId());
+        }
     }
 
     @Override
     public void markerRightClicked(GoogleMapMarker marker) {
-        markerRightClickedRpc.markerRightClicked(marker.getId());
+        if (isEnabled()) {
+            markerRightClickedRpc.markerRightClicked(marker.getId());
+        }
     }
 
     @Override
     public void polygonRightClicked(GoogleMapPolygon polygon) {
-        polygonRightClickedRpc.polygonRightClicked(polygon.getId());
+        if (isEnabled()) {
+            polygonRightClickedRpc.polygonRightClicked(polygon.getId());
+        }
     }
 }
