@@ -515,6 +515,29 @@ public class GoogleMap extends AbstractComponentContainer {
         this.initListener = initListener;
     }
 
+    /**
+     * Creates a new GoogleMap object with the given center, zoom and ability to set init listener.
+     * Other settings will be {@link GoogleMapState defaults of the state object}.
+     *
+     * @param center         Coordinates of the center.
+     * @param zoom           Amount of zoom.
+     * @param apiKey         The Maps server key from Google
+     * @param clientId       the client ID for the Business API. All client IDs begin with a gme- prefix. Not required
+     *                       when developing in localhost.
+     * @param language       language
+     * @param initListener   listener which will be called once, on map initialization. Map initialization
+     *                       corresponds to "tilesloaded" event in google map api v3.
+     * @param mapsApiVersion Google Maps API version that should be used
+     */
+    public GoogleMap(LatLon center, int zoom, String apiKey, String clientId, String language,
+                     MapInitListener initListener, String mapsApiVersion) {
+        this(center, zoom, apiKey, clientId, language, initListener);
+
+        if (mapsApiVersion != null && !mapsApiVersion.isEmpty()) {
+            getState().mapsApiVersion = mapsApiVersion;
+        }
+    }
+
     /*
      * (non-Javadoc)
      *
