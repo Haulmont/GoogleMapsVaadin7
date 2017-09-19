@@ -354,10 +354,11 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
             AjaxLoader.init(getState().apiKey, getState().apiUrl);
         }
 
-        load(onLoad, loadLibraries, language, params);
+        load(onLoad, loadLibraries, language, getState().mapsApiVersion, params);
     }
 
-    private static void load(Runnable onLoad, ArrayList<LoadApi.LoadLibrary> loadLibraries, LoadApi.Language language, String otherParams) {
+    private static void load(Runnable onLoad, ArrayList<LoadApi.LoadLibrary> loadLibraries, LoadApi.Language language,
+                             String mapsApiVersion, String otherParams) {
         String op = "";
         if (otherParams != null) {
             op = op + "&" + otherParams;
@@ -373,7 +374,7 @@ public class GoogleMapConnector extends AbstractComponentConnector implements
 
         AjaxLoader.AjaxLoaderOptions settings = AjaxLoader.AjaxLoaderOptions.newInstance();
         settings.setOtherParms(op);
-        AjaxLoader.loadApi("maps", "3.25", onLoad, settings);
+        AjaxLoader.loadApi("maps", mapsApiVersion, onLoad, settings);
     }
 
     private static String getLibraries(ArrayList<LoadApi.LoadLibrary> loadLibraries) {

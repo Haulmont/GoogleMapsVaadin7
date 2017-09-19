@@ -5,7 +5,7 @@
 	<groupId>com.vaadin.tapio</groupId>
 	<artifactId>googlemaps-root</artifactId>
 	<packaging>pom</packaging>
-	<version>1.0.2.CUBA.16</version>
+	<version>1.0.2.CUBA.17</version>
 	<name>GoogleMaps Add-on Root Project</name>
 	<modules>
 		<module>googlemaps</module>
