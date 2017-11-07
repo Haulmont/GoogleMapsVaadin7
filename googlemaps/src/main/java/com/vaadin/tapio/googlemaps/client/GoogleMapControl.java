@@ -7,5 +7,5 @@ package com.vaadin.tapio.googlemaps.client;
  * 
  */
 public enum GoogleMapControl {
-    MapType, OverView, Pan, Rotate, Scale, StreetView, Zoom
+    MapType, OverView, Pan, Rotate, Scale, StreetView, Zoom, Fullscreen
 }
