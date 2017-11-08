@@ -45,7 +45,8 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public Set<GoogleMapControl> controls = new HashSet<GoogleMapControl>(
             Arrays.asList(GoogleMapControl.MapType, GoogleMapControl.Pan,
                     GoogleMapControl.Rotate, GoogleMapControl.Scale,
-                    GoogleMapControl.StreetView, GoogleMapControl.Zoom));
+                    GoogleMapControl.StreetView, GoogleMapControl.Zoom,
+                    GoogleMapControl.Fullscreen));
 
     public boolean limitCenterBounds = false;
     public LatLon centerSWLimit = new LatLon(0.0, 0.0);
