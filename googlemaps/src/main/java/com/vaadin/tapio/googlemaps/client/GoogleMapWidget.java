@@ -1060,8 +1060,14 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                 .contains(GoogleMapControl.StreetView));
         mapOptions.setZoomControl(controls.contains(GoogleMapControl.Zoom));
 
+        setFullscreenControl(mapOptions, controls.contains(GoogleMapControl.Fullscreen));
+
         map.setOptions(mapOptions);
     }
+
+    protected final native void setFullscreenControl(MapOptions mapOptions, boolean value) /*-{
+        mapOptions.fullscreenControl = value;
+    }-*/;
 
     public void setDraggable(boolean draggable) {
         mapOptions.setDraggable(draggable);
