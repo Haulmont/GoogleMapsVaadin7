@@ -1606,4 +1606,9 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                     GoogleMapAdapterUtils.fromDirectionsStatus(status));
         }
     }
+
+    //Haulmont API
+    protected Map<Marker, GoogleMapMarker> getMarkerMap() {
+        return markerMap;
+    }
 }
