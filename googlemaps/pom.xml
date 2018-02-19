@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.haulmont.thirdparty</groupId>
 	<artifactId>googlemaps</artifactId>
-	<version>1.0.2.CUBA.18</version>
+	<version>1.0.2.CUBA.19</version>
 	<packaging>jar</packaging>
 	<name>GoogleMaps Add-on</name>
 	<organization>
