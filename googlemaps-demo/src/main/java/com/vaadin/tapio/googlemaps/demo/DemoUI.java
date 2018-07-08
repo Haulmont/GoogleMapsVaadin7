@@ -1,19 +1,14 @@
 package com.vaadin.tapio.googlemaps.demo;
 
-import java.util.ArrayList;
-import javax.servlet.annotation.WebServlet;
-
 import com.vaadin.annotations.VaadinServletConfiguration;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.drawing.*;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
@@ -23,6 +18,11 @@ import com.vaadin.tapio.googlemaps.demo.events.OpenInfoWindowOnMarkerClickListen
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button.ClickEvent;
 
+import javax.servlet.annotation.WebServlet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
 /**
  * Google Maps UI for testing and demoing.
  */
@@ -31,8 +31,8 @@ public class DemoUI extends UI {
 
     private GoogleMap googleMap;
     private GoogleMapMarker kakolaMarker = new GoogleMapMarker(
-        "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415),
-        true, null);
+            "DRAGGABLE: Kakolan vankila", new LatLon(60.44291, 22.242415),
+            true, null);
     private GoogleMapInfoWindow kakolaInfoWindow = new GoogleMapInfoWindow(
         "Kakola used to be a provincial prison.", kakolaMarker);
     private GoogleMapMarker maariaMarker = new GoogleMapMarker("Maaria",

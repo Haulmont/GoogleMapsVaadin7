@@ -1,14 +1,5 @@
 package com.vaadin.tapio.googlemaps.client;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.DivElement;
@@ -41,54 +32,63 @@ import com.google.gwt.maps.client.layers.KmlLayerOptions;
 import com.google.gwt.maps.client.layers.TrafficLayer;
 import com.google.gwt.maps.client.mvc.MVCArray;
 import com.google.gwt.maps.client.overlays.*;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.maps.client.controls.ControlPosition;
+import com.google.gwt.maps.client.drawinglib.DrawingControlOptions;
+import com.google.gwt.maps.client.drawinglib.DrawingManager;
+import com.google.gwt.maps.client.drawinglib.DrawingManagerOptions;
+import com.google.gwt.maps.client.drawinglib.OverlayType;
+import com.google.gwt.maps.client.events.insertat.InsertAtMapEvent;
+import com.google.gwt.maps.client.events.insertat.InsertAtMapHandler;
+import com.google.gwt.maps.client.events.overlaycomplete.polygon.PolygonCompleteMapEvent;
+import com.google.gwt.maps.client.events.removeat.RemoveAtMapEvent;
+import com.google.gwt.maps.client.events.removeat.RemoveAtMapHandler;
+import com.google.gwt.maps.client.events.setat.SetAtMapEvent;
+import com.google.gwt.maps.client.events.setat.SetAtMapHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
-
-import com.vaadin.tapio.googlemaps.GoogleMap;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MapTypeChangeListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
 
+import java.util.*;
+
 public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public static final String CLASSNAME = "googlemap";
-    protected MapWidget map;
+
     protected MapImpl mapImpl;
+    private MapWidget map;
+    private MapOptions mapOptions;
+    private Map<Marker, GoogleMapMarker> markerMap = new HashMap<Marker, GoogleMapMarker>();
+    private Map<GoogleMapMarker, Marker> gmMarkerMap = new HashMap<GoogleMapMarker, Marker>();
+    private Map<Polygon, GoogleMapPolygon> polygonMap = new HashMap<Polygon, GoogleMapPolygon>();
+    private Map<Polyline, GoogleMapPolyline> polylineMap = new HashMap<Polyline, GoogleMapPolyline>();
+    private Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<KmlLayer, GoogleMapKmlLayer>();
+    private MarkerClickListener markerClickListener = null;
+    private MarkerDragListener markerDragListener = null;
+    private InfoWindowClosedListener infoWindowClosedListener = null;
+    private PolygonCompleteListener polygonCompleteListener = null;
+    private PolygonEditListener polygonEditListener = null;
 
-    protected MapOptions mapOptions;
-    protected Map<Marker, GoogleMapMarker> markerMap = new HashMap<>();
-    protected Map<GoogleMapMarker, Marker> gmMarkerMap = new HashMap<>();
-    protected Map<Polygon, GoogleMapPolygon> polygonMap = new HashMap<>();
-    protected Map<Polyline, GoogleMapPolyline> polylineMap = new HashMap<>();
+    protected DrawingManager drawingManager;
+    private MapMoveListener mapMoveListener = null;
+    private LatLngBounds allowedBoundsCenter = null;
+    private LatLngBounds allowedBoundsVisibleArea = null;
 
+    protected MapClickListener mapClickListener = null;
+    protected MapTypeChangeListener mapTypeChangeListener = null;
 
     protected Map<CustomInfoWindow, GoogleMapInfoWindow> infoWindowMap = new HashMap<>();
     protected Map<GoogleMapInfoWindow, CustomInfoWindow> gmInfoWindowMap = new HashMap<>();
     protected Map<Long, CustomInfoWindow> infoWindowIDs = new HashMap<>();
 
-    protected Map<KmlLayer, GoogleMapKmlLayer> kmlLayerMap = new HashMap<>();
-    protected MarkerClickListener markerClickListener = null;
-    protected MarkerDragListener markerDragListener = null;
-    protected InfoWindowClosedListener infoWindowClosedListener = null;
-
     protected Map<Marker, Long> markerDragCounter = new HashMap<>();
-
-    protected MapMoveListener mapMoveListener = null;
-    protected LatLngBounds allowedBoundsCenter = null;
-    protected LatLngBounds allowedBoundsVisibleArea = null;
-
-    protected MapClickListener mapClickListener = null;
-    protected MapTypeChangeListener mapTypeChangeListener = null;
 
     protected boolean forceBoundUpdate = false;
     protected boolean mapOptionsChanged = false;
@@ -207,7 +207,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         LatLng center = mapOptions.getCenter();
 
         if (forceUpdate || zoom != map.getZoom() || center == null
-            || !center.equals(map.getCenter())) {
+                || center.getLatitude() != map.getCenter().getLatitude()
+                || center.getLongitude() != map.getCenter().getLongitude()) {
             zoom = map.getZoom();
             center = map.getCenter();
             mapOptions.setZoom(zoom);
@@ -291,6 +292,19 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         return result;
     }
 
+    public void setZoom(int zoom) {
+        if (mapOptions.getZoom() == zoom) {
+            return;
+        }
+        mapOptions.setZoom(zoom);
+        mapOptionsChanged = true;
+        panningNeeded = true;
+    }
+
+    public LatLng getCenter() {
+        return map.getCenter();
+    }
+
     private void removeMarkers(List<GoogleMapMarker> markers) {
         for (GoogleMapMarker gmarker : markers) {
 
@@ -357,7 +371,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
                         }
                     }
                 });
-
             } else {
                 updateMarker(googleMapMarker);
             }
@@ -397,6 +410,14 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         infoWindowClosedListener = listener;
     }
 
+    public void setPolygonCompleteListener(PolygonCompleteListener listener) {
+        polygonCompleteListener = listener;
+    }
+
+    public void setPolygonEditListener(PolygonEditListener listener) {
+        polygonEditListener = listener;
+    }
+
     public void setMapTypeChangeListener(MapTypeChangeListener listener) {
         mapTypeChangeListener = listener;
     }
@@ -434,19 +455,6 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         return map.getZoom();
     }
 
-    public void setZoom(int zoom) {
-        if (mapOptions.getZoom() == zoom) {
-            return;
-        }
-        mapOptions.setZoom(zoom);
-        mapOptionsChanged = true;
-        panningNeeded = true;
-    }
-
-    public LatLng getCenter() {
-        return map.getCenter();
-    }
-
     public double getLatitude() {
         return map.getCenter().getLatitude();
     }
@@ -457,8 +465,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setCenterBoundLimits(LatLon limitNE, LatLon limitSW) {
         allowedBoundsCenter = LatLngBounds.newInstance(
-            LatLng.newInstance(limitSW.getLat(), limitSW.getLon()),
-            LatLng.newInstance(limitNE.getLat(), limitNE.getLon()));
+                LatLng.newInstance(limitSW.getLat(), limitSW.getLon()),
+                LatLng.newInstance(limitNE.getLat(), limitNE.getLon()));
     }
 
     public void clearCenterBoundLimits() {
@@ -467,17 +475,17 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
 
     public void setVisibleAreaBoundLimits(LatLon limitNE, LatLon limitSW) {
         allowedBoundsVisibleArea = LatLngBounds.newInstance(
-            LatLng.newInstance(limitSW.getLat(), limitSW.getLon()),
-            LatLng.newInstance(limitNE.getLat(), limitNE.getLon()));
+                LatLng.newInstance(limitSW.getLat(), limitSW.getLon()),
+                LatLng.newInstance(limitNE.getLat(), limitNE.getLon()));
     }
 
     public void clearVisibleAreaBoundLimits() {
         allowedBoundsVisibleArea = null;
     }
 
-    public void setPolygonOverlays(Set<GoogleMapPolygon> polyOverlays) {
+    public void setPolygonOverlays(Map<Long, GoogleMapPolygon> polyOverlays) {
         if (polygonMap.size() == polyOverlays.size()
-            && polygonMap.values().containsAll(polyOverlays)) {
+            && polygonMap.values().containsAll(polyOverlays.values())) {
             return;
         }
 
@@ -486,11 +494,11 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         }
         polygonMap.clear();
 
-        for (GoogleMapPolygon overlay : polyOverlays) {
+        for (GoogleMapPolygon overlay : polyOverlays.values()) {
             MVCArray<LatLng> points = MVCArray.newInstance();
             for (LatLon latLon : overlay.getCoordinates()) {
                 LatLng latLng = LatLng.newInstance(latLon.getLat(),
-                    latLon.getLon());
+                        latLon.getLon());
                 points.push(latLng);
             }
 
@@ -506,6 +514,8 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             Polygon polygon = Polygon.newInstance(options);
             polygon.setPath(points);
             polygon.setMap(map);
+            polygon.setEditable(overlay.isEditable());
+            attachPolygonEditListeners(polygon, overlay);
             polygonMap.put(polygon, overlay);
         }
 
@@ -525,8 +535,7 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         for (GoogleMapPolyline overlay : polylineOverlays) {
             MVCArray<LatLng> points = MVCArray.newInstance();
             for (LatLon latLon : overlay.getCoordinates()) {
-                LatLng latLng = LatLng.newInstance(latLon.getLat(),
-                    latLon.getLon());
+                LatLng latLng = LatLng.newInstance(latLon.getLat(), latLon.getLon());
                 points.push(latLng);
             }
 
@@ -826,6 +835,201 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
             if(win != null && win.getContents() != w) {
                 win.setContent(w);
             }
+        }
+    }
+    public DrawingManager getDrawingManager() {
+        return drawingManager;
+    }
+
+    public void setDrawingOptions(DrawingOptions vOptions) {
+        if (vOptions == null) {
+            if (drawingManager != null) {
+                drawingManager.setMap(null);
+                drawingManager = null;
+            }
+            return;
+        }
+
+        DrawingManagerOptions options = toDrawingManagerOptions(vOptions);
+
+        final com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions
+                vPolygonOptions = vOptions.getPolygonOptions();
+        options.setPolygonOptions(toPolygonOptions(vPolygonOptions));
+        drawingManager = DrawingManager.newInstance(options);
+        drawingManager.setMap(map);
+
+        drawingManager.addPolygonCompleteHandler(
+                new PolygonCompleteMapHandler(vPolygonOptions));
+    }
+
+    private DrawingManagerOptions toDrawingManagerOptions(DrawingOptions drawingOptions) {
+        com.vaadin.tapio.googlemaps.client.drawing.DrawingControlOptions
+                vControlOptions = drawingOptions.getDrawingControlOptions();
+        DrawingControlOptions controlOptions = DrawingControlOptions.newInstance();
+
+        ControlPosition cp = toControlPosition(vControlOptions.getPosition());
+        if (cp != null) {
+            controlOptions.setPosition(cp);
+        }
+
+        if (!vControlOptions.getDrawingModes().isEmpty()) {
+            List<com.vaadin.tapio.googlemaps.client.drawing.OverlayType>
+                    vDrawingModes = vControlOptions.getDrawingModes();
+
+            int drawingModesNum = vDrawingModes.size();
+            OverlayType[] drawingModes = new OverlayType[drawingModesNum];
+            for (int i = 0; i < drawingModesNum; i++) {
+                OverlayType ot = toOverlayType(vDrawingModes.get(i));
+                if (ot != null) {
+                    drawingModes[i] = ot;
+                }
+            }
+            controlOptions.setDrawingModes(drawingModes);
+        }
+
+        DrawingManagerOptions options = DrawingManagerOptions.newInstance();
+        options.setDrawingControlOptions(controlOptions);
+        options.setDrawingControl(drawingOptions.isEnableDrawingControl());
+
+        OverlayType ot = toOverlayType(drawingOptions.getInitialDrawingMode());
+        if (ot != null) {
+            options.setDrawingMode(ot);
+        }
+
+        return options;
+    }
+
+    private void attachPolygonEditListeners(final Polygon polygon,
+            final GoogleMapPolygon vPolygon) {
+        MVCArray path = polygon.getPath();
+        if (path != null) {
+            path.addInsertAtHandler(new InsertAtMapHandler() {
+                @Override
+                public void onEvent(InsertAtMapEvent event) {
+                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
+                            PolygonEditListener.ActionType.INSERT);
+                }
+            });
+            path.addSetAtHandler(new SetAtMapHandler() {
+                @Override
+                public void onEvent(SetAtMapEvent event) {
+                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
+                            PolygonEditListener.ActionType.SET);
+                }
+            });
+            path.addRemoveAtHandler(new RemoveAtMapHandler() {
+                @Override
+                public void onEvent(RemoveAtMapEvent event) {
+                    firePolygonEdited(polygon, vPolygon, event.getIndex(),
+                            PolygonEditListener.ActionType.REMOVE);
+                }
+            });
+        }
+    }
+
+    private void firePolygonEdited(Polygon polygon, GoogleMapPolygon
+            vPolygon, int idx, PolygonEditListener.ActionType action) {
+        LatLng latLng = polygon.getPath().get(idx);
+        polygonEditListener.polygonEdited(vPolygon, action, idx,
+                new LatLon(latLng.getLatitude(), latLng.getLongitude()));
+    }
+
+    private PolygonOptions toPolygonOptions(
+            com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions vOptions) {
+        PolygonOptions options = PolygonOptions.newInstance();
+        options.setEditable(vOptions.isEditable());
+        options.setClickable(vOptions.isClickable());
+        options.setFillColor(vOptions.getFillColor());
+        options.setFillOpacity(vOptions.getFillOpacity());
+        options.setGeodesic(vOptions.isGeodesic());
+        options.setStrokeColor(vOptions.getStrokeColor());
+        options.setStrokeOpacity(vOptions.getStrokeOpacity());
+        options.setStrokeWeight(vOptions.getStrokeWeight());
+        options.setVisible(vOptions.isVisible());
+        options.setZindex(vOptions.getZIndex());
+        return options;
+    }
+
+    private OverlayType toOverlayType(
+            com.vaadin.tapio.googlemaps.client.drawing.OverlayType vOverlayType) {
+        if (vOverlayType == null) {
+            return null;
+        }
+
+        switch (vOverlayType) {
+            case POLYGON: return OverlayType.POLYGON;
+            case CIRCLE: return OverlayType.POLYGON;
+            case MARKER: return OverlayType.POLYGON;
+            case POLYLINE: return OverlayType.POLYGON;
+            case RECTANGLE: return OverlayType.POLYGON;
+            default: return null;
+        }
+    }
+
+    private ControlPosition toControlPosition(
+            com.vaadin.tapio.googlemaps.client.drawing.ControlPosition vPosition) {
+        if (vPosition == null) {
+            return null;
+        }
+
+        switch (vPosition) {
+            case BOTTOM_CENTER: return ControlPosition.BOTTOM_CENTER;
+            case BOTTOM_LEFT: return ControlPosition.BOTTOM_LEFT;
+            case BOTTOM_RIGHT: return ControlPosition.BOTTOM_RIGHT;
+            case TOP_CENTER: return ControlPosition.TOP_CENTER;
+            case TOP_LEFT: return ControlPosition.TOP_LEFT;
+            case TOP_RIGHT: return ControlPosition.TOP_RIGHT;
+            case LEFT_CENTER: return ControlPosition.LEFT_CENTER;
+            case LEFT_TOP: return ControlPosition.LEFT_TOP;
+            case LEFT_BOTTOM: return ControlPosition.LEFT_BOTTOM;
+            case RIGHT_CENTER: return ControlPosition.RIGHT_CENTER;
+            case RIGHT_TOP: return ControlPosition.RIGHT_TOP;
+            case RIGHT_BOTTOM: return ControlPosition.RIGHT_BOTTOM;
+            default: return null;
+        }
+    }
+
+    private class PolygonCompleteMapHandler implements
+            com.google.gwt.maps.client.events.overlaycomplete.polygon.PolygonCompleteMapHandler {
+
+        private final com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions polygonOptions;
+
+        public PolygonCompleteMapHandler(com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions polygonOptions) {
+            this.polygonOptions = polygonOptions;
+        }
+
+        @Override
+        public void onEvent(PolygonCompleteMapEvent event) {
+            Polygon polygon = event.getPolygon();
+
+            JsArray<LatLng> polygonCoordinates = polygon.getPath().getArray();
+            List<LatLon> googlePolygonCoordinates =
+                    new ArrayList<LatLon>(polygonCoordinates.length() * 2);
+
+            for (int i = 0; i < polygonCoordinates.length(); i++) {
+                LatLng latLng = polygonCoordinates.get(i);
+                googlePolygonCoordinates.add(new LatLon(latLng.getLatitude(),
+                        latLng.getLongitude()));
+            }
+
+            GoogleMapPolygon vPolygon = new GoogleMapPolygon();
+            vPolygon.setCoordinates(googlePolygonCoordinates);
+
+            if (polygonOptions != null) {
+                vPolygon.setFillColor(polygonOptions.getFillColor());
+                vPolygon.setFillOpacity(polygonOptions.getFillOpacity());
+                vPolygon.setGeodesic(polygonOptions.isGeodesic());
+                vPolygon.setStrokeColor(polygonOptions.getStrokeColor());
+                vPolygon.setStrokeOpacity(polygonOptions.getStrokeOpacity());
+                vPolygon.setStrokeWeight(polygonOptions.getStrokeWeight());
+                vPolygon.setStrokeColor(polygonOptions.getStrokeColor());
+                vPolygon.setzIndex(polygonOptions.getZIndex());
+                vPolygon.setStrokeColor(polygonOptions.getStrokeColor());
+            }
+            vPolygon.setEditable(polygon.getEditable());
+            polygonMap.put(polygon, vPolygon);
+            attachPolygonEditListeners(polygon, vPolygon);
+            polygonCompleteListener.polygonComplete(vPolygon);
         }
     }
 }

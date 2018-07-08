@@ -1,17 +1,14 @@
 package com.vaadin.tapio.googlemaps.client;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.vaadin.shared.ui.AbstractComponentContainerState;
+import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
+
+import java.util.*;
 
 /**
  * The shared state of the Google Maps. Contains also the default values.
@@ -34,6 +31,10 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public boolean keyboardShortcutsEnabled = true;
     public boolean scrollWheelEnabled = true;
 
+    public boolean supportDrawing = false;
+
+    public DrawingOptions drawingOptions = null;
+
     public Set<GoogleMapControl> controls = new HashSet<GoogleMapControl>(
         Arrays.asList(GoogleMapControl.MapType, GoogleMapControl.Pan,
             GoogleMapControl.Rotate, GoogleMapControl.Scale,
@@ -50,7 +51,6 @@ public class GoogleMapState extends AbstractComponentContainerState {
     public LatLon fitToBoundsNE = null;
     public LatLon fitToBoundsSW = null;
 
-    public Set<GoogleMapPolygon> polygons = new HashSet<GoogleMapPolygon>();
     public Set<GoogleMapPolyline> polylines = new HashSet<GoogleMapPolyline>();
     public Set<GoogleMapKmlLayer> kmlLayers = new HashSet<GoogleMapKmlLayer>();
 
@@ -58,6 +58,8 @@ public class GoogleMapState extends AbstractComponentContainerState {
 
     public Map<Long, GoogleMapInfoWindow> infoWindows = new HashMap<Long, GoogleMapInfoWindow>();
     public boolean trafficLayerVisible = false;
+
+    public Map<Long, GoogleMapPolygon> polygons = new HashMap<Long, GoogleMapPolygon>();
 
     public String apiUrl = null;
 

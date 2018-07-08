@@ -1,42 +1,30 @@
 package com.vaadin.tapio.googlemaps;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.vaadin.tapio.googlemaps.client.GoogleMapControl;
 import com.vaadin.tapio.googlemaps.client.GoogleMapState;
 import com.vaadin.tapio.googlemaps.client.LatLon;
-import com.vaadin.tapio.googlemaps.client.events.InfoWindowClosedListener;
-import com.vaadin.tapio.googlemaps.client.events.MapClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
-import com.vaadin.tapio.googlemaps.client.events.MarkerDragListener;
+import com.vaadin.tapio.googlemaps.client.drawing.DrawingOptions;
+import com.vaadin.tapio.googlemaps.client.events.*;
 import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolyline;
-import com.vaadin.tapio.googlemaps.client.rpcs.InfoWindowClosedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapMovedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MapTypeChangedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerClickedRpc;
-import com.vaadin.tapio.googlemaps.client.rpcs.MarkerDraggedRpc;
+import com.vaadin.tapio.googlemaps.client.rpcs.*;
 import com.vaadin.ui.AbstractComponentContainer;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.CssLayout;
+
+import java.util.*;
 
 /**
  * The class representing Google Maps.
  */
 public class GoogleMap extends AbstractComponentContainer {
+
+    private static final long serialVersionUID = -2869498659894907433L;
 
     /**
      * Base map types supported by Google Maps.
@@ -113,7 +101,55 @@ public class GoogleMap extends AbstractComponentContainer {
         }
     };
 
-    private final List<MarkerClickListener> markerClickListeners = new ArrayList<>();
+    private PolygonCompleteRpc polygonCompleteRpc = new PolygonCompleteRpc() {
+        private static final long serialVersionUID = 8989540297240790126L;
+
+        @Override
+        public void polygonComplete(GoogleMapPolygon polygon) {
+            if (polygon == null) {
+                return;
+            }
+            getState().polygons.put(polygon.getId(), polygon);
+            for (PolygonCompleteListener listener : polygonCompleteListeners) {
+                listener.polygonComplete(polygon);
+            }
+        }
+    };
+
+    private PolygonEditRpc polygonEditRpc = new PolygonEditRpc() {
+        private static final long serialVersionUID = -8138362526979836605L;
+
+        @Override
+        public void polygonEdited(long polygonId, PolygonEditListener.ActionType actionType, int idx, LatLon latLon) {
+            if (actionType == null || latLon == null) {
+                return;
+            }
+            GoogleMapPolygon polygon = getState().polygons.get(polygonId);
+            if (polygon == null) {
+                return;
+            }
+
+            switch (actionType) {
+                case INSERT:
+                    polygon.getCoordinates().add(idx, latLon);
+                    break;
+                case REMOVE:
+                    polygon.getCoordinates().remove(idx);
+                    break;
+                case SET:
+                    LatLon existing = polygon.getCoordinates().get(idx);
+                    existing.setLat(latLon.getLat());
+                    existing.setLon(latLon.getLon());
+                    latLon = existing;
+                    break;
+            }
+            for (PolygonEditListener listener : polygonEditListeners) {
+                listener.polygonEdited(polygon, actionType, idx, latLon);
+            }
+        }
+    };
+
+    private final List<MarkerClickListener> markerClickListeners = new ArrayList<MarkerClickListener>();
 
     private final List<MapMoveListener> mapMoveListeners = new ArrayList<>();
 
@@ -130,6 +166,10 @@ public class GoogleMap extends AbstractComponentContainer {
      * Should never be visible itself.
      */
     private final CssLayout infoWindowContentLayout = new CssLayout();
+
+    private List<PolygonCompleteListener> polygonCompleteListeners = new ArrayList<PolygonCompleteListener>();
+
+    private List<PolygonEditListener> polygonEditListeners = new ArrayList<PolygonEditListener>();
 
     /**
      * Initiates a new GoogleMap object with default settings from the
@@ -167,6 +207,8 @@ public class GoogleMap extends AbstractComponentContainer {
         registerRpc(markerDraggedRpc);
         registerRpc(infoWindowClosedRpc);
         registerRpc(mapTypeChangedRpc);
+        registerRpc(polygonCompleteRpc);
+        registerRpc(polygonEditRpc);
     }
 
     /*
@@ -303,6 +345,22 @@ public class GoogleMap extends AbstractComponentContainer {
         markerDragListeners.add(listener);
     }
 
+    public void addPolygonCompleteListener(PolygonCompleteListener listener) {
+        polygonCompleteListeners.add(listener);
+    }
+
+    public void removePolygonCompleteListener(PolygonCompleteListener listener) {
+        polygonCompleteListeners.remove(listener);
+    }
+
+    public void addPolygonEditListener(PolygonEditListener listener) {
+        polygonEditListeners.add(listener);
+    }
+
+    public void removePolygonEditListener(PolygonEditListener listener) {
+        polygonEditListeners.remove(listener);
+    }
+
     /**
      * Removes a MarkerDragListenr from the map.
      *
@@ -403,7 +461,7 @@ public class GoogleMap extends AbstractComponentContainer {
      * @param polygon The GoogleMapPolygon to add.
      */
     public void addPolygonOverlay(GoogleMapPolygon polygon) {
-        getState().polygons.add(polygon);
+        getState().polygons.put(polygon.getId(), polygon);
     }
 
     /**
@@ -412,7 +470,7 @@ public class GoogleMap extends AbstractComponentContainer {
      * @param polygon The GoogleMapPolygon to remove.
      */
     public void removePolygonOverlay(GoogleMapPolygon polygon) {
-        getState().polygons.remove(polygon);
+        getState().polygons.remove(polygon.getId());
     }
 
     /**
@@ -738,4 +796,11 @@ public class GoogleMap extends AbstractComponentContainer {
             .put(window.getId(), contentIdentifier);
     }
 
+    public void setDrawingOptions(DrawingOptions drawingOptions) {
+        getState().drawingOptions = drawingOptions;
+    }
+
+    public DrawingOptions getDrawingOptions() {
+        return getState().drawingOptions;
+    }
 }

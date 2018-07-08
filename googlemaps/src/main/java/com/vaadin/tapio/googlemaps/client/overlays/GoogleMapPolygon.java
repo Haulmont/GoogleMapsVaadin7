@@ -1,10 +1,10 @@
 package com.vaadin.tapio.googlemaps.client.overlays;
 
+import com.vaadin.tapio.googlemaps.client.LatLon;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.vaadin.tapio.googlemaps.client.LatLon;
 
 /**
  * A class representing a polygon overlay of Google Maps.
@@ -32,6 +32,8 @@ public class GoogleMapPolygon implements Serializable {
     private int zIndex = 0;
 
     private boolean geodesic = false;
+
+    private boolean editable = false;
 
     /**
      * Instantiates a new polygon overlay using default values.
@@ -221,6 +223,14 @@ public class GoogleMapPolygon implements Serializable {
      */
     public void setGeodesic(boolean geodesic) {
         this.geodesic = geodesic;
+    }
+
+    public boolean isEditable() {
+        return editable;
+    }
+
+    public void setEditable(boolean editable) {
+        this.editable = editable;
     }
 
     public long getId() {
