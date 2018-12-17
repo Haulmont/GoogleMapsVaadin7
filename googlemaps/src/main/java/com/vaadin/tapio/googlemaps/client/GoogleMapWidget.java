@@ -1245,10 +1245,14 @@ public class GoogleMapWidget extends FlowPanel implements RequiresResize {
         DrawingManagerOptions options = GoogleMapAdapterUtils.toDrawingManagerOptions(vOptions);
 
         final com.vaadin.tapio.googlemaps.client.drawing.PolygonOptions vPolygonOptions = vOptions.getPolygonOptions();
-        options.setPolygonOptions(GoogleMapAdapterUtils.toPolygonOptions(vPolygonOptions));
+        if (vPolygonOptions != null) {
+            options.setPolygonOptions(GoogleMapAdapterUtils.toPolygonOptions(vPolygonOptions));
+        }
 
         final com.vaadin.tapio.googlemaps.client.drawing.CircleOptions vCircleOptions = vOptions.getCircleOptions();
-        options.setCircleOptions(GoogleMapAdapterUtils.toCircleOptions(vCircleOptions));
+        if (vCircleOptions != null) {
+            options.setCircleOptions(GoogleMapAdapterUtils.toCircleOptions(vCircleOptions));
+        }
 
         drawingManager = DrawingManager.newInstance(options);
         drawingManager.setMap(map);
