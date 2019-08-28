@@ -83,5 +83,5 @@ public class GoogleMapState extends AbstractComponentState {
     public Map<Long, GoogleMapLabel> labels = new HashMap<Long, GoogleMapLabel>();
 
     public String apiUrl = null;
-    public String mapsApiVersion = "3.35";
+    public String mapsApiVersion = "3.38";
 }
